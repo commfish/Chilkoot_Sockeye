@@ -6,7 +6,7 @@
 library(arm)
 library(lmtest)
 library(rjags)
-#library(R2OpenBUGS)
+library(R2OpenBUGS)  #Needed for the write.model function
 library(gdata)
 library(tidyverse)
 
@@ -98,7 +98,8 @@ AR=function(){
   sigma.white ~ dunif(0,10)
   
 
-  for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }  #Is this a prior or not????
+  for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
+  
   
   mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
   for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
