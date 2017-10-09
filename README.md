@@ -1,2 +1,2 @@
 # Chilkoot_Sockeye
-replaces the "Alaska Salmon" repository
+Bayesian spawner-recruit analysis of Chilkoot Lake sockeye salmon. Replaces the "Alaska Salmon" repository
