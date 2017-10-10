@@ -116,15 +116,15 @@ AR=function(){
   #NEW MODEL
   for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   
-  #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
+  mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
 
-  #for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
+  for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
   
-  #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
+  for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
   
-  #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
-  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
+  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
   
   
   
@@ -326,11 +326,9 @@ coda$Umsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c)))
 coda<-as.data.frame(coda)
 summary<-summary(coda) 
 q1<-apply(coda,2,quantile,probs=c(0,0.025,0.5,0.975,1))#percentiles
-write.csv(q1, file= paste("results/Model 3/Model3_quantiles_lambert.csv") )    
-write.csv(summary, file= paste("results/Model 3/Model3_lambert.csv") ) 
-write.csv(coda, file= paste("results/Model 3/Model3_coda_lambert.csv") )
-
-
+write.csv(q1, file= paste("results/Model 3/Model3_quantiles_lambert.csv"))    
+write.csv(summary, file= paste("results/Model 3/Model3_lambert.csv")) 
+write.csv(coda, file= paste("results/Model 3/Model3_coda_lambert.csv"))
 
 
 
