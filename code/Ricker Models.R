@@ -9,6 +9,9 @@ library(rjags)
 library(R2OpenBUGS)  #Needed for the write.model function
 library(gdata)
 library(tidyverse)
+library(gls) #Needed to calculate Lambert's W
+
+
 
 #data----
 brood <- read.csv("data/Chilkoot_Sock.csv", header = TRUE)
@@ -33,10 +36,10 @@ sr.data <- list(n = n, S = sr$S, lnRS = sr$lnRS)
 
 
 #analysis----
-#check AR(1)
+#check autocorrelation
 mylm <- lm(lnRS ~ S, sr)
-dwtest(mylm)
-pacf(residuals(mylm))
+dwtest(mylm)  #Durbin Watson test for autocorrelation of "disturbances"
+pacf(residuals(mylm)) 
 
 
 ##Ricker model for stock-recruitment analysis ##################################################
@@ -51,7 +54,7 @@ Ricker=function(){
   resid.red.0 ~ dnorm(0,tau.red)
   
   
-
+#OLD MODEL
   for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   
   mean2.lnRS[1]  <- mean1.lnRS[1] + phi * resid.red.0  
@@ -59,7 +62,9 @@ Ricker=function(){
   
   for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  }
   for(y in 1:n) {  resid.red[y]  <- lnRS[y] - mean1.lnRS[y]  }
-  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  } 
+  
+  
   
   tau.white <- 1 / sigma.white / sigma.white        
   tau.red <- tau.white * (1-phi*phi)
@@ -98,15 +103,28 @@ AR=function(){
   sigma.white ~ dunif(0,10)
   
 
+  
+  #OLD MODEL
+  #for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
+  #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
+  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
+  #for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
+  #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
+  #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  
+ 
+  #NEW MODEL
   for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   
+  #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
+
+  #for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
   
-  mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
-  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
+  #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
   
-  for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
-  for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
-  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  
+  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
   
   
   
@@ -290,10 +308,32 @@ write.csv(dic.pD.summary, file=paste("results/Ricker_AR_DIC.csv") )
 post2 <- coda.samples(jmod, c("lnalpha", "beta", "lnalpha.c"), n.iter=100000, thin=10,n.burnin=10000) 
 x <- as.array(post2)
 x <- data.frame(x)
-coda <- x[,1:3] 
+#coda <- x[,1:3] 
+#new stuff from Sara M below this.....
+coda1 <- x[,1:3]
+coda2 <- x[,4:6]
+coda3 <- x[,7:9]
+coda1<- rename.vars(coda1, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("beta","lnalpha", "lnalpha.c"))
+coda2<- rename.vars(coda2, from=c("beta.2","lnalpha.2","lnalpha.c.2"), to=c("beta","lnalpha", "lnalpha.c"))
+coda3<- rename.vars(coda3, from=c("beta.3","lnalpha.3","lnalpha.c.3"), to=c("beta","lnalpha", "lnalpha.c"))
+coda<-rbind(coda1,coda2,coda3)
+coda$S.max <- 1 / coda$beta 
+coda$S.eq.c <- coda$lnalpha.c * coda$S.max #Eq.21
+coda$U.msy_Hilborn <- coda$lnalpha.c * (0.5-0.07*coda$lnalpha.c)
+coda$S.msy_Hilborn <- coda$S.eq.c *(0.5-0.07*coda$lnalpha.c) #hilborn
+coda$Smsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c)))/coda$beta 
+coda$Umsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c))) 
+coda<-as.data.frame(coda)
+summary<-summary(coda) 
+q1<-apply(coda,2,quantile,probs=c(0,0.025,0.5,0.975,1))#percentiles
+write.csv(q1, file= paste("results/Model 3/Model3_quantiles_lambert.csv") )    
+write.csv(summary, file= paste("results/Model 3/Model3_lambert.csv") ) 
+write.csv(coda, file= paste("results/Model 3/Model3_coda_lambert.csv") )
 
 
-#Add lambert estimations for Smax, Seq, Smsy, and umsy here????
-coda <- rename.vars(coda, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("beta","lnalpha", "lnalpha.c"))
-write.csv(coda, file= paste("results/Ricker_AR_coda.csv") ,row.names=FALSE) # writes csv file
+
+
+
+#coda <- rename.vars(coda, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("beta","lnalpha", "lnalpha.c"))
+#write.csv(coda, file= paste("results/Ricker_AR_coda.csv") ,row.names=FALSE) # writes csv file
 
