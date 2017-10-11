@@ -95,7 +95,7 @@ write.model(Ricker, paste("code/Chilkoot_Sockeye.txt", sep=""))
 #Next, Ricker JAGS model WITH autocorrelation: AR(1)  ###################################
 AR=function(){
   
-  #PRIORS
+  #OLD PRIORS
   lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative
   beta ~ dnorm(0,1.0E-6)%_%T(0,10)  #uninformative, normal distribution, constrained to be >0
   phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98) #AR(1) model so phi IS included and does not = zero. uninformative btwn -1 & 1
@@ -107,13 +107,13 @@ AR=function(){
   #OLD MODEL
   #for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
-  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
+  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1 mean model
   #for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
   #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
   #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
  
-  #NEW MODEL
+  #NEW MODEL, based upon Chilkat sockeye analysis by Sara Miller, but without age structure
   for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   
   mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
@@ -124,7 +124,7 @@ AR=function(){
   
   for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
-  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
+  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1 means model
   
   
   
@@ -136,14 +136,13 @@ AR=function(){
   #sigma.white<-1/sqrt(tau.white)
   #sigma<-sigma.red
   
-  lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.
-                                                      #for the AR model
-  #lnalpha.c <- lnalpha
-  
+  lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.for the AR model
   S.max <- 1 / beta
   S.eq <- S.max * lnalpha.c 
   
- # S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
+ 
+  #OLD reference point cals below. Now calculate from model output
+  # S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
   #U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
   #R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
   #MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0.
@@ -309,6 +308,8 @@ post2 <- coda.samples(jmod, c("lnalpha", "beta", "lnalpha.c"), n.iter=100000, th
 x <- as.array(post2)
 x <- data.frame(x)
 #coda <- x[,1:3] 
+
+
 #new stuff from Sara M below this.....
 coda1 <- x[,1:3]
 coda2 <- x[,4:6]
