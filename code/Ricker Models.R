@@ -3,13 +3,14 @@
 #maintained by Rich Brenner....lots of input from Ben Williams! Thanks Ben.
 
 #load----
+library(lme4)
 library(arm)
 library(lmtest)
 library(rjags)
 library(R2OpenBUGS)  #Needed for the write.model function
 library(gdata)
 library(tidyverse)
-library(gls) #Needed to calculate Lambert's W
+library(gsl) #Needed to calculate Lambert's W
 
 
 
@@ -93,18 +94,9 @@ write.model(Ricker, paste("code/Chilkoot_Sockeye.txt", sep=""))
 
 #############################################################################
 #Next, Ricker JAGS model WITH autocorrelation: AR(1)  ###################################
-AR=function(){
-  
-  #OLD PRIORS
-  lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative
-  beta ~ dnorm(0,1.0E-6)%_%T(0,10)  #uninformative, normal distribution, constrained to be >0
-  phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98) #AR(1) model so phi IS included and does not = zero. uninformative btwn -1 & 1
-  resid.red.0 ~ dnorm(0,tau.red)
-  sigma.white ~ dunif(0,10)
-  
 
-  
-  #OLD MODEL
+#OLD MODEL
+#AR=function(){
   #for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
   #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1 mean model
@@ -112,43 +104,65 @@ AR=function(){
   #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
   #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
- 
+  #OLD PRIORS
+  #lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative
+  #beta ~ dnorm(0,1.0E-6)%_%T(0,10)  #uninformative, normal distribution, constrained to be >0
+  #phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98) #AR(1) model so phi IS included and does not = zero. uninformative btwn -1 & 1
+  #resid.red.0 ~ dnorm(0,tau.red)
+  #sigma.white ~ dunif(0,10)
+  
   #NEW MODEL, based upon Chilkat sockeye analysis by Sara Miller, but without age structure
-  for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
-  
-  mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
+AR=function(){
+  for(y in 1:n) {log.R[y] ~ dnorm(log.R.mean2[y],tau.R)}
 
-  for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
+  for(y in 1:n) {R[y] <- exp(log.R[y])}
   
-  for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
+  for(y in 1:n) {log.R.mean1[y] <- log(S[y]) + lnalpha - beta * S[y]} # Ricker modelcheck that [y] is correct
   
-  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
+  for(y in 1:n) {log.resid[y] <- log(R[y])-log.R.mean1[y]}
+}
+  log.R.mean2[1] <- log.R.mean1[1] + phi * log.resid.0
   
-  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1 means model
+  for (y in 2:n) { log.R.mean2[y] <- log.R.mean1[y] + phi * log.resid[y-1]}   #AR1 means model
+  
+  #NEW Priors
+  lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative;*
+  #normal distribution with mean 0 and large variance; constrained to be >0 since more biologically conservative (pg. 406)
+  beta ~ dnorm(0,1.0E-6)%_%T(0,10)   #uninformative; normal distrib; constrained to be >0 *          
+  phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98)#uninformative; btw -1 and 1
+  #mean.log.RO ~ dnorm(0,1.0E-6)#uninformative (initial returns); mean of initial returns
+  #tau.RO ~ dgamma(0.001,0.001)#uninformative (initial returns); variance of initial returns
+  log.resid.0 ~ dnorm(0,tau.red)#model residual with AR(1) process error
+  tau.R ~ dgamma(0.001,0.001) #uninformative
+  sigma.R <- 1 / sqrt(tau.R)
+  alpha <- exp(lnalpha)
+  #sigma.RO <- 1 / sqrt(tau.RO)#uninformative; informative (not shown) prior had large effect on parameter itself 
+  #and initial R values, but not on key model quantities
+  tau.red <- tau.R * (1-phi*phi)
+  lnalpha.c <- lnalpha + (sigma.R * sigma.R / 2 / (1-phi*phi) ) 
   
   
   
-  alpha <- exp(lnalpha) #exponentiate to solve for alpha
-  sigma.red <- 1 / sqrt(tau.red)
-  tau.white <- 1 / sigma.white / sigma.white
-  tau.red <- tau.white * (1-phi*phi)
+  #alpha <- exp(lnalpha) #exponentiate to solve for alpha
+  #sigma.red <- 1 / sqrt(tau.red)
+  #tau.white <- 1 / sigma.white / sigma.white
+  #tau.red <- tau.white * (1-phi*phi)
 
   #sigma.white<-1/sqrt(tau.white)
   #sigma<-sigma.red
   
-  lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.for the AR model
-  S.max <- 1 / beta
-  S.eq <- S.max * lnalpha.c 
+  #lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.for the AR model
+  #S.max <- 1 / beta
+  #S.eq <- S.max * lnalpha.c 
   
  
-  #OLD reference point cals below. Now calculate from model output
+  #OLD reference point cals below. Now calculate from model output using 
   # S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
   #U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
   #R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
   #MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0.
   #step(x) = 1 if x>=0; otherwise =0 if x<0
   
-}
 
 #write the AR model to a text file to be called by WinBUGS or JAGS
 model_file_loc=paste("code/Chilkoot_Sockeye_AR.txt", sep="")
