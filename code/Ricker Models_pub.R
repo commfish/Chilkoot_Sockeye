@@ -3,16 +3,12 @@
 #maintained by Rich Brenner....lots of input from Ben Williams! Thanks Ben.
 
 #load----
-library(lme4)
 library(arm)
 library(lmtest)
 library(rjags)
-library(R2OpenBUGS)  #Needed for the write.model function
+library(R2OpenBUGS) #Needed for write model
 library(gdata)
 library(tidyverse)
-library(gsl) #Needed to calculate Lambert's W
-
-
 
 #data----
 brood <- read.csv("data/Chilkoot_Sock.csv", header = TRUE)
@@ -37,10 +33,10 @@ sr.data <- list(n = n, S = sr$S, lnRS = sr$lnRS)
 
 
 #analysis----
-#check autocorrelation
+#check AR(1)
 mylm <- lm(lnRS ~ S, sr)
-dwtest(mylm)  #Durbin Watson test for autocorrelation of "disturbances"
-pacf(residuals(mylm)) 
+dwtest(mylm)
+pacf(residuals(mylm))
 
 
 ##Ricker model for stock-recruitment analysis ##################################################
@@ -48,6 +44,7 @@ pacf(residuals(mylm))
 #First, Ricker WITHOUT autocorrelation #########################################################
 Ricker=function(){
   
+  #PRIORS
   lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) 
   beta ~ dnorm(0,1.0E-6)%_%T(0,10)               
   phi <- 0                #this model does not account for autocorrelation so phi is not used (thus, phi =0)
@@ -55,7 +52,7 @@ Ricker=function(){
   resid.red.0 ~ dnorm(0,tau.red)
   
   
-#OLD MODEL
+
   for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
   
   mean2.lnRS[1]  <- mean1.lnRS[1] + phi * resid.red.0  
@@ -63,9 +60,7 @@ Ricker=function(){
   
   for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  }
   for(y in 1:n) {  resid.red[y]  <- lnRS[y] - mean1.lnRS[y]  }
-  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  } 
-  
-  
+  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
   tau.white <- 1 / sigma.white / sigma.white        
   tau.red <- tau.white * (1-phi*phi)
@@ -74,15 +69,14 @@ Ricker=function(){
   lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)# lnalpha.c is for the AR model.
                                               #adjust for calculating means of R.msy, S.msy etc., but should =
                                               #same as alpha when phi = 0 (non-AR model).
-
   alpha <- exp(lnalpha)  #exponentiate to solve for alpha
   S.max <- 1 / beta
   S.eq <- S.max * lnalpha.c 
   
-  #S.msy <- S.eq * (0.5 - 0.07*lnalpha.c) #Hilborn approximation of Smsy...could use Scheuerell solution too....
-  #U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)
-  #R.msy <- S.msy * exp(lnalpha.c - beta * S.msy)  #Solves for recruits at Smsy
-  #MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy< S.msy then MSY=0.
+  S.msy <- S.eq * (0.5 - 0.07*lnalpha.c) #Hilborn approximation of Smsy...could use Scheuerell solution too....
+  U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)
+  R.msy <- S.msy * exp(lnalpha.c - beta * S.msy)  #Solves for recruits at Smsy
+  MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy< S.msy then MSY=0.
   #step(x) = 1 if x>=0; otherwise =0 if x<0
   
   
@@ -94,75 +88,47 @@ write.model(Ricker, paste("code/Chilkoot_Sockeye.txt", sep=""))
 
 #############################################################################
 #Next, Ricker JAGS model WITH autocorrelation: AR(1)  ###################################
-
-#OLD MODEL
-#AR=function(){
-  #for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }
-  #mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
-  #for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1 mean model
-  #for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
-  #for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
-  #for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
-  
-  #OLD PRIORS
-  #lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative
-  #beta ~ dnorm(0,1.0E-6)%_%T(0,10)  #uninformative, normal distribution, constrained to be >0
-  #phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98) #AR(1) model so phi IS included and does not = zero. uninformative btwn -1 & 1
-  #resid.red.0 ~ dnorm(0,tau.red)
-  #sigma.white ~ dunif(0,10)
-  
-  #NEW MODEL, based upon Chilkat sockeye analysis by Sara Miller, but without age structure
 AR=function(){
-  for(y in 1:n) {log.R[y] ~ dnorm(log.R.mean2[y],tau.R)}
+  
+  #PRIORS
+  lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative
+  beta ~ dnorm(0,1.0E-6)%_%T(0,10)  #uninformative, normal distribution, constrained to be >0
+  phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98) #AR(1) model so phi IS included and does not = zero. uninformative btwn -1 & 1
+  resid.red.0 ~ dnorm(0,tau.red)
+  sigma.white ~ dunif(0,10)
+  
 
-  for(y in 1:n) {R[y] <- exp(log.R[y])}
+  for(y in 1:n) {lnRS[y] ~ dnorm(mean2.lnRS[y],tau.white) }  #Is this a prior or not????
   
-  for(y in 1:n) {log.R.mean1[y] <- log(S[y]) + lnalpha - beta * S[y]} # Ricker modelcheck that [y] is correct
+  mean2.lnRS[1] <- mean1.lnRS[1] + phi * resid.red.0  
+  for (y in 2:n) { mean2.lnRS[y] <- mean1.lnRS[y] + phi * resid.red[y-1] }   #AR1
   
-  for(y in 1:n) {log.resid[y] <- log(R[y])-log.R.mean1[y]}
-}
-  log.R.mean2[1] <- log.R.mean1[1] + phi * log.resid.0
-  
-  for (y in 2:n) { log.R.mean2[y] <- log.R.mean1[y] + phi * log.resid[y-1]}   #AR1 means model
-  
-  #NEW Priors
-  lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative;*
-  #normal distribution with mean 0 and large variance; constrained to be >0 since more biologically conservative (pg. 406)
-  beta ~ dnorm(0,1.0E-6)%_%T(0,10)   #uninformative; normal distrib; constrained to be >0 *          
-  phi ~ dnorm(0,1.0E-6)%_%T(-0.98,0.98)#uninformative; btw -1 and 1
-  #mean.log.RO ~ dnorm(0,1.0E-6)#uninformative (initial returns); mean of initial returns
-  #tau.RO ~ dgamma(0.001,0.001)#uninformative (initial returns); variance of initial returns
-  log.resid.0 ~ dnorm(0,tau.red)#model residual with AR(1) process error
-  tau.R ~ dgamma(0.001,0.001) #uninformative
-  sigma.R <- 1 / sqrt(tau.R)
-  alpha <- exp(lnalpha)
-  #sigma.RO <- 1 / sqrt(tau.RO)#uninformative; informative (not shown) prior had large effect on parameter itself 
-  #and initial R values, but not on key model quantities
-  tau.red <- tau.R * (1-phi*phi)
-  lnalpha.c <- lnalpha + (sigma.R * sigma.R / 2 / (1-phi*phi) ) 
+  for(y in 1:n) {  mean1.lnRS[y] <- lnalpha - beta * S[y]  } #This is the Ricker model
+  for(y in 1:n) {  resid.red[y]     <- lnRS[y] - mean1.lnRS[y]  }
+  for(y in 1:n) {  resid.white[y] <- lnRS[y] - mean2.lnRS[y]  }
   
   
   
-  #alpha <- exp(lnalpha) #exponentiate to solve for alpha
-  #sigma.red <- 1 / sqrt(tau.red)
-  #tau.white <- 1 / sigma.white / sigma.white
-  #tau.red <- tau.white * (1-phi*phi)
+  alpha <- exp(lnalpha) #exponentiate to solve for alpha
+  sigma.red <- 1 / sqrt(tau.red)
+  tau.white <- 1 / sigma.white / sigma.white
+  tau.red <- tau.white * (1-phi*phi)
 
   #sigma.white<-1/sqrt(tau.white)
   #sigma<-sigma.red
   
-  #lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.for the AR model
-  #S.max <- 1 / beta
-  #S.eq <- S.max * lnalpha.c 
+  lnalpha.c <- lnalpha + (sigma.red * sigma.red / 2)  #adjust for calculating means of R.msy, S.msy etc.
+                                                      #for the AR model
+  #lnalpha.c <- lnalpha
   
- 
-  #OLD reference point cals below. Now calculate from model output using 
-  # S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
-  #U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
-  #R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
-  #MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0.
-  #step(x) = 1 if x>=0; otherwise =0 if x<0
+  S.max <- 1 / beta
+  S.eq <- S.max * lnalpha.c 
   
+  S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
+  U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
+  R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
+  MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0.
+  }
 
 #write the AR model to a text file to be called by WinBUGS or JAGS
 model_file_loc=paste("code/Chilkoot_Sockeye_AR.txt", sep="")
@@ -318,13 +284,18 @@ dic.pD.summary <- data.frame(dev1, pD, dic.pD)
 write.csv(dic.pD.summary, file=paste("results/Ricker_AR_DIC.csv") ) 
 
 #Create coda samples for horsetail plots and probability plots for the AR model
-post2 <- coda.samples(jmod, c("lnalpha", "beta", "lnalpha.c"), n.iter=100000, thin=10,n.burnin=10000) 
+post2 <- coda.samples(jmod, c("lnalpha", "beta", "lnalpha.c"), n.iter=100000, thin=100,n.burnin=10000) 
 x <- as.array(post2)
 x <- data.frame(x)
-#coda <- x[,1:3] 
+coda <- x[,1:3] 
+coda <- rename.vars(coda, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("beta","lnalpha", "lnalpha.c"))
+write_csv(coda, "results/Ricker_AR_coda.csv") # writes csv file
 
-
-#new stuff from Sara M below this.....
+#Create coda samples for lambert calc
+library(gsl)
+post2a <- coda.samples(jmod, c("lnalpha", "beta", "lnalpha.c"), n.iter=100000, thin=100,n.burnin=10000) 
+x <- as.array(post2a)
+x <- data.frame(x)
 coda1 <- x[,1:3]
 coda2 <- x[,4:6]
 coda3 <- x[,7:9]
@@ -332,21 +303,11 @@ coda1<- rename.vars(coda1, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("bet
 coda2<- rename.vars(coda2, from=c("beta.2","lnalpha.2","lnalpha.c.2"), to=c("beta","lnalpha", "lnalpha.c"))
 coda3<- rename.vars(coda3, from=c("beta.3","lnalpha.3","lnalpha.c.3"), to=c("beta","lnalpha", "lnalpha.c"))
 coda<-rbind(coda1,coda2,coda3)
-coda$S.max <- 1 / coda$beta 
-coda$S.eq.c <- coda$lnalpha.c * coda$S.max #Eq.21
-coda$U.msy_Hilborn <- coda$lnalpha.c * (0.5-0.07*coda$lnalpha.c)
-coda$S.msy_Hilborn <- coda$S.eq.c *(0.5-0.07*coda$lnalpha.c) #hilborn
 coda$Smsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c)))/coda$beta 
 coda$Umsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c))) 
 coda<-as.data.frame(coda)
 summary<-summary(coda) 
 q1<-apply(coda,2,quantile,probs=c(0,0.025,0.5,0.975,1))#percentiles
-write.csv(q1, file= paste("results/Model 3/Model3_quantiles_lambert.csv"))    
-write.csv(summary, file= paste("results/Model 3/Model3_lambert.csv")) 
-write.csv(coda, file= paste("results/Model 3/Model3_coda_lambert.csv"))
-
-
-
-#coda <- rename.vars(coda, from=c("beta.1","lnalpha.1","lnalpha.c.1"), to=c("beta","lnalpha", "lnalpha.c"))
-#write.csv(coda, file= paste("results/Ricker_AR_coda.csv") ,row.names=FALSE) # writes csv file
-
+write.csv(q1, file= paste("results/AR_quantiles_lambert.csv") )    
+write.csv(summary, file= paste("results/AR_lambert.csv") ) 
+write.csv(coda, file= paste("results/AR_coda_lambert.csv") ) 
