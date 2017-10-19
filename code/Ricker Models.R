@@ -120,12 +120,12 @@ AR=function(){
   for(y in 1:n) {log.R.mean1[y] <- log(S[y]) + lnalpha - beta * S[y]} # Ricker modelcheck that [y] is correct
   
   for(y in 1:n) {log.resid[y] <- log(R[y])-log.R.mean1[y]}
-}
+
   log.R.mean2[1] <- log.R.mean1[1] + phi * log.resid.0
   
   for (y in 2:n) { log.R.mean2[y] <- log.R.mean1[y] + phi * log.resid[y-1]}   #AR1 means model
   
-  #NEW Priors
+  #PRIORS
   lnalpha ~ dnorm(0,1.0E-6)%_%T(0,10) #uninformative;*
   #normal distribution with mean 0 and large variance; constrained to be >0 since more biologically conservative (pg. 406)
   beta ~ dnorm(0,1.0E-6)%_%T(0,10)   #uninformative; normal distrib; constrained to be >0 *          
@@ -142,6 +142,15 @@ AR=function(){
   lnalpha.c <- lnalpha + (sigma.R * sigma.R / 2 / (1-phi*phi) ) 
   
   
+}
+
+  S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
+  U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
+  R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
+  MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0. 
+  
+  
+
   
   #alpha <- exp(lnalpha) #exponentiate to solve for alpha
   #sigma.red <- 1 / sqrt(tau.red)
@@ -157,10 +166,7 @@ AR=function(){
   
  
   #OLD reference point cals below. Now calculate from model output using 
-  # S.msy <- S.eq * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation to calculate Smsy
-  #U.msy <- lnalpha.c * (0.5 - 0.07*lnalpha.c)  #Hilborn approximation of U.msy
-  #R.msy <- S.msy * exp(lnalpha.c - beta * S.msy) #Xinxian's calculation of R.msy
-  #MSY <- step(R.msy-S.msy)*(R.msy-S.msy) #if R.msy < S.msy then MSY=0.
+
   #step(x) = 1 if x>=0; otherwise =0 if x<0
   
 
@@ -262,7 +268,9 @@ inits <- list(inits1, inits2, inits3)
 #parameters<-c("lnalpha.c","beta", "sigma.red","S.msy", "MSY", "I90" )
 parameters <- c("lnalpha.c","beta", "sigma.red","S.msy", "MSY", "phi", "S.max", "S.eq", "S.msy", "U.msy", "R.msy","lnalpha", "alpha",
                 "sigma.white","resid.red.0")
-jmod <- jags.model(file='code/Chilkoot_Sockeye_AR.txt', data=sr.data, n.chains=3, inits=inits, n.adapt=10000) 
+
+#Check below that data should be "sr" and not "sr.data"
+jmod <- jags.model(file='code/Chilkoot_Sockeye_AR.txt', data=sr, n.chains=3, inits=inits, n.adapt=10000) 
 x <- update(jmod, n.iter=1000000, by=1000, progress.bar='text', DIC=T, n.burnin=10000) 
 post <- coda.samples(jmod, parameters, n.iter=1000000, thin=1000, n.burnin=10000) #iterations kept=(iterations/thin)*chains
 post.samp <- post
@@ -341,9 +349,9 @@ coda$Umsy_lambert <- (1-lambert_W0(exp(1-coda$lnalpha.c)))
 coda<-as.data.frame(coda)
 summary<-summary(coda) 
 q1<-apply(coda,2,quantile,probs=c(0,0.025,0.5,0.975,1))#percentiles
-write.csv(q1, file= paste("results/Model 3/Model3_quantiles_lambert.csv"))    
-write.csv(summary, file= paste("results/Model 3/Model3_lambert.csv")) 
-write.csv(coda, file= paste("results/Model 3/Model3_coda_lambert.csv"))
+write.csv(q1, file= paste("results/quantiles_lambert.csv"))    
+write.csv(summary, file= paste("results/lambert.csv")) 
+write.csv(coda, file= paste("results/coda_lambert.csv"))
 
 
 
