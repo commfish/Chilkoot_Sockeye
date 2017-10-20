@@ -269,17 +269,17 @@ profile(i=10,z=500,xa.start=0, xa.end=700,lnalpha.c, beta)#can change i,z, xa.st
     scale_x_continuous(labels = comma,breaks = seq(0, 350000, 50000), limits = c(0, 350000))+ylab("Recruits (R)")+xlab("Spawners (S)")+
     geom_line(data=dataset, aes(x=Escapement, y=Escapement, group=1),linetype="solid", size=1)+#replacement line
     geom_line(data=subset(dataset,dataset$Variable==51),colour = "black", lty=2, size=2)+
-    geom_point(data=subset(dataset,dataset$Variable==52),colour = "black", pch=16, size=2)+
+    geom_point(data=subset(dataset,dataset$Variable==52),colour = "black", pch=16, size=1)+
     geom_text(size=3, data=dataset1, aes(x=Escapement1, y=Recruitment, group=52, label=Year,family="Times", 
                                          hjust = -0.1, vjust= -0.4))
-#Alternative horsetail plot
+
   png(file='figures/Horsetail_Plot.png', res=200, width=6, height=4, units ="in")  
   grid.newpage()
   pushViewport(viewport(layout=grid.layout(1,1)))
   vplayout<-function(x,y) viewport (layout.pos.row=x, layout.pos.col=y)
   print(Fig,vp=vplayout(1,1:1)) 
   dev.off()
-  
+#Alternative horsetail plot
   dataset <- subset(dataset,Variable == 52) 
   dataset['Escapement1']<-dataset$Escapement
   dataset<-subset(dataset, select = -c(lnalpha.c, beta, Escapement))
