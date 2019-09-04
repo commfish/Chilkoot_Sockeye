@@ -18,6 +18,9 @@ library(grid)
 library(plyr)
 library(gsl)
 library(scales)
+library(ggplot2)
+library(FNGr)
+library(FField)
 windowsFonts(Times=windowsFont("Times New Roman"))
 theme_set(theme_sleek())
 source('state_space_model/code/functions.r')
@@ -41,91 +44,88 @@ coda %>%
 profile(i=10, z=500, xa.start=0, xa.end=700,lnalpha.c, beta) #can change i,z, xa.start, xa.end
 QM <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/QM.csv")
 CI <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/CI.csv")
+parameters <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/parameters.csv")
 num <- nrow(QM)
 QM %>%
   dplyr::select(c(escapement)) -> x
 coda %>%
   dplyr::select(c(lnalpha.c, beta)) %>%
   filter(row_number()==1:50) %>%
-  slice(rep(1:n(), each = num)) -> x1
-dataset<-cbind(x, x1) #lnalpha.c, beta, and S
-dataset %>%
+  slice(rep(1:n(), each = num)) %>%
+  cbind(., x) %>% #lnalpha.c, beta, and S 
   mutate(recruitment = escapement*exp(lnalpha.c-beta*escapement),
-         variable = rep(1:50,each=num)) -> dataset
+         variable = rep(1:50,each=num),
+         year = "") -> dataset
 
 QM %>%
   dplyr::select(c(escapement)) %>%
   mutate (lnalpha.c = lnalpha.c,
           beta = beta,
           recruitment = escapement*exp(lnalpha.c-beta*escapement),
-          variable = 51)-> x2
+          variable = 51,
+          year = "")%>%
+  rbind(., dataset) -> dataset
 
-dataset<-rbind(dataset, x2)
-
-read.csv('state_space_model/data/parameters.csv') %>%
+parameters %>%
   mutate(escapement = spawn,
-          lnalpha.c = NA,
-          beta = NA,
-          recruitment =recruit,
-          variable = 52) %>%
-  dplyr::select(c(escapement, lnalpha.c, beta, recruitment, variable)) %>%
+         lnalpha.c = NA,
+         beta = NA,
+         recruitment =recruit,
+         variable = 52) %>%
+  dplyr::select(c(escapement, lnalpha.c, beta, recruitment, variable, year)) %>%
   rbind(., dataset) %>%
   arrange(variable, escapement) -> dataset
 
 ggplot(data=dataset, aes(x=escapement, y=recruitment, group=variable))+
     geom_line(data=subset(dataset,dataset$variable<52),linetype="solid", size=0.5, color="grey80")+
-    scale_y_continuous(labels = comma,breaks = seq(0, 1500000, 50000), limits = c(0, 1500000))+
-    scale_x_continuous(labels = comma,breaks = seq(0, 350000, 50000), limits = c(0, 350000))+ylab("Recruits (R)")+xlab("Spawners (S)")+
+    scale_y_continuous(labels = comma,breaks = seq(0, 1500000, 250000), limits = c(0, 1500000))+
+    scale_x_continuous(labels= comma,breaks = seq(0, 1500000, 250000), limits = c(0, 1500000))+
+    ylab("Recruits (R)")+xlab("Spawners (S)")+
     geom_line(data=dataset, aes(x=escapement, y=escapement, group=1),linetype="solid", size=1)+#replacement line
-    geom_line(data=subset(dataset,dataset$variable==51),colour = "black", lty=2, size=2)+
-    geom_point(data=subset(dataset,dataset$variable==52),colour = "black", pch=16, size=1)+
-    geom_text(size=3, data=dataset, aes(x=Escapement1, y=Recruitment, group=52, label=Year,family="Times", 
-                                         hjust = -0.1, vjust= -0.4))
-ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/horsetail.png", dpi = 500, height = 6, width = 8, units = "in")
+    geom_line(data=subset(dataset,variable==51),colour = "black", lty=2, size=2)+
+    geom_point(data=subset(dataset,variable==52),colour = "black", pch=16, size=1)+
+    geom_text(size=3, data=dataset, aes(x=escapement, y=recruitment, group=52, label=year,family="Times", 
+                                         hjust = -0.1, vjust= -0.4)) 
+  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/horsetail.png", dpi = 500, height = 6, width = 8, units = "in")
 
 #Alternative horsetail plot
-  dataset <- subset(dataset,variable == 52) 
-  dataset['Escapement1']<-dataset$Escapement
-  dataset<-subset(dataset, select = -c(lnalpha.c, beta, Escapement))
-  dataset['Escapement']<-'NA'
-  CI['Year']<-'NA'
-  CI['variable']<-51
-  CI['Recruitment']<-'NA'
-  CI['Escapement1']<-'NA'
-  dataset['Median']<-'NA'
-  dataset['q95']<-'NA'
-  dataset['q90']<-'NA'
-  dataset['q10']<-'NA'
-  dataset['q5']<-'NA'
-  dataset1<-rbind(dataset, CI)
-  dataset1$Escapement<-as.numeric(dataset1$Escapement)
-  dataset1$Median<-as.numeric(dataset1$Median)
-  dataset1$q5<-as.numeric(dataset1$q5)
-  dataset1$q95<-as.numeric(dataset1$q95)
-  dataset1$q10<-as.numeric(dataset1$q10)
-  dataset1$q90<-as.numeric(dataset1$q90)
-  dataset1$Recruitment<-as.numeric(dataset1$Recruitment)
-  dataset1$Escapement1<-as.numeric(dataset1$Escapement1)
+  dataset %>%
+    filter (variable %in% c(52)) %>%
+    mutate(escapement1 = escapement) %>%
+    dplyr::select(-c(lnalpha.c, beta, escapement)) %>%
+    mutate(escapement = 'NA',
+           Median = 'NA',
+           q95 = 'NA',
+           q90 ='NA',
+           q10 ='NA',
+           q5 = 'NA') -> dataset
+  CI %>%
+    mutate(year = 'NA',
+           variable = 51,
+           recruitment = 'NA',
+           escapement1 ='NA')%>%
+    rbind(., dataset) %>%
+    mutate_if(is.character, as.numeric) -> dataset1
   
-  Fig1<-ggplot(data=dataset1, aes(x=Escapement, y=Median, group=variable))+geom_line(size=2, lty=2, group=51)+
-    geom_ribbon(aes(ymin = q5, ymax = q95, group=51), alpha=.15)+
-    geom_ribbon(aes(ymin = q10, ymax = q90, group=51), alpha=.15)+
-    xlab('Spawners (S)')+
-    ylab('Recruits (R)')+
-    scale_x_continuous(labels = comma,breaks = seq(0, 350000, 50000), limits = c(0,350000))+
-    scale_y_continuous(labels = comma,breaks = seq(0, 650000, 100000), limits = c(0,650000))+
-    geom_line(aes(x=Escapement, y=Escapement, group=51),linetype="solid", size=1)+
-    geom_text(size=3, data=dataset1, aes(x=Escapement1, y=Recruitment, group=52, label=Year,family="Times", 
-                                         hjust = -0.1, vjust= -0.4))
-  Fig1<-Fig1+
-    geom_point(data=dataset1, aes(x=Escapement1, y=Recruitment, group=52),pch=16, size=1)
- 
-
-  png(file='figures/Horsetail_Plot_Reconfig.png', res=200, width=6, height=4, units ="in")  
-  grid.newpage()
-  pushViewport(viewport(layout=grid.layout(1,1)))
-  vplayout<-function(x,y) viewport (layout.pos.row=x, layout.pos.col=y)
-  print(Fig1,vp=vplayout(1,1:1)) 
-  dev.off()
+  x.fact <- 100/max(dataset1$escapement) 
+  y.fact <- 100/max(dataset1$recruitment1)
+  coords <- FFieldPtRep(coords = cbind(dataset1$escapement1 * x.fact, dataset1$recruitment * y.fact), rep.fact = 40)
+  x.t <- coords$x/x.fact 
+  y.t <- coords$y/y.fact 
+  
+  ggplot(data=dataset1, aes(x=escapement, y=Median, group=variable)) + 
+    geom_line(size=1, lty=2, group=51) +
+    geom_ribbon(aes(ymin = q5, ymax = q95, group=51), alpha=.08) +
+    geom_ribbon(aes(ymin = q10, ymax = q90, group=51), alpha=.08) +
+    xlab('Spawners (S)') +
+    ylab('Recruits (R)') +
+    scale_y_continuous(labels = comma,breaks = seq(0, 800000, 100000), limits = c(0, 800000)) +
+    scale_x_continuous(labels = comma,breaks = seq(0, 800000, 100000), limits = c(0, 800000)) +
+    geom_line(aes(x=escapement, y=escapement, group=51),linetype="solid", size=1) +
+    geom_point(data=dataset1, aes(x=x.t, y=y.t, group=52),pch=16, size=1) +
+    geom_point(data=dataset1, aes(x=escapement1, y=recruitment, group=52),pch=16, size=1) +
+   geom_text(size=3, data=dataset1, aes(x=escapement1, y=recruitment, group=52, label=year,family="Times", 
+                                         hjust = -0.1, vjust= -0.4)) 
+  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/horsetail2.png", dpi = 500, height = 6, width = 8, units = "in")
   
  
