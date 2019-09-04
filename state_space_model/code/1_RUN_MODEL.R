@@ -23,16 +23,13 @@ library(arm)
 library(lmtest)
 library(gdata)
 
-
 # STEP 1: CHOOSE SETTINGS----
 
 # if test runs then do sensitivity tests with explore, and final run with full
 # "explore" version takes ~10min with the current settings.
-
-out.label <-  "R2Jags_Explore_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
-package.use <- "R2jags"  #"rjags"  or "R2jags"
+out.label <-  "rjags_Explore_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
+package.use <- "rjags"  #"rjags"  or "R2jags"
 jags.settings <- "test"  # "test" or "explore" or full" 
-sensitivity.analysis <- 0 #0 1 is yes and 0 is no
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
@@ -94,7 +91,7 @@ source("state_space_model/code/model_inits.R")
 # start the timer
 # R2jags
 start.jags <- proc.time()
-if(package.use == "R2jags" & sensitivity.analysis == 0){ # new version
+if(package.use == "R2jags"){ # new version
   r2jags.out <- R2jags::jags(data = dat , inits = inits, 
                    parameters.to.save = parameters, model.file = mod,
                    n.chains = 3, 
@@ -133,7 +130,7 @@ if(!conv.check){print("The R2jags model run DID NOT CONVERGE for all the key var
 }
 
 #rjags
-if(package.use == "rjags" & sensitivity.analysis == 0){
+if(package.use == "rjags"){
   parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                   "resid.red.0")
   jmod <- rjags::jags.model(file='state_space_model/code/Chilkoot_sockeye.txt', data=dat, n.chains=3, inits=inits, n.adapt=n.adapt.use) 
@@ -143,7 +140,7 @@ if(package.use == "rjags" & sensitivity.analysis == 0){
 end.jags <- proc.time()   # store time for MCMC
 post.arr <- as.array(post) # convert to an accessible obj
 
-source("state_space_model/code/2b_GENERATE_OUTPUTS.R")
+#source("state_space_model/code/2_GENERATE_OUTPUTS.R")
 }
 end.output  <- proc.time() 
 

@@ -81,8 +81,13 @@ ggplot(data=dataset, aes(x=escapement, y=recruitment, group=variable))+
     geom_point(data=subset(dataset,dataset$variable==52),colour = "black", pch=16, size=1)+
     geom_text(size=3, data=dataset, aes(x=Escapement1, y=Recruitment, group=52, label=Year,family="Times", 
                                          hjust = -0.1, vjust= -0.4))
-ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/horsetail.png", dpi = 500, height = 6, width = 8, units = "in")
 
+  png(file='figures/Horsetail_Plot.png', res=200, width=6, height=4, units ="in")  
+  grid.newpage()
+  pushViewport(viewport(layout=grid.layout(1,1)))
+  vplayout<-function(x,y) viewport (layout.pos.row=x, layout.pos.col=y)
+  print(Fig,vp=vplayout(1,1:1)) 
+  dev.off()
 #Alternative horsetail plot
   dataset <- subset(dataset,variable == 52) 
   dataset['Escapement1']<-dataset$Escapement

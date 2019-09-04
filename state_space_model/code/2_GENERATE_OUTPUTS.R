@@ -32,7 +32,7 @@ gel <- as.data.frame(gelman.diag(post, multivariate=F)[[1]])
 poor.threshold = 1.2 #values less than 1.2 are generally considered converged
 gel %>%
   rownames_to_column('variable') %>%
-  rename(point_estimate = "Point est.") %>%
+  mutate(point_estimate = "Point est.") %>%
   mutate (converge = ifelse(point_estimate < poor.threshold, "true", "false")) %>%
   write.csv(., file= paste0(out.path,"/gelman.csv") )   
 
@@ -154,6 +154,7 @@ coda3 %>%
          lnalpha.c = lnalpha.c.3) -> coda3
 coda<-rbind(coda1,coda2,coda3)
 write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)   
+
 
 #combine statsquants and lambert datafile----
 stats<-as.data.frame(read.csv(file=paste0(out.path, "/statsquants.csv"),header=T))
