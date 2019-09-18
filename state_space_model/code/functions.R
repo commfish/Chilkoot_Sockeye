@@ -71,8 +71,8 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   qm <- spread(qm, measure, value)
   qm <- qm[c("q95", "q90", "Median","q10", "q5", "escapement")]
   Y <- Y[c("oy_0.9", "oy_0.8", "or_0.9","or_0.8", "of_0.9", "of_0.8", "oy_0.7","or_0.7","of_0.7","escapement")]
-  write.csv(qm,("state_space_model/output/rjags_Explore_BaseCase/processed/QM.csv"), row.names=FALSE)
-  write.csv(Y,("state_space_model/output/rjags_Explore_BaseCase/processed/Y.csv"), row.names=FALSE)
+  write.csv(qm,("state_space_model/output/rjags_Full_BaseCase/processed/QM.csv"), row.names=FALSE)
+  write.csv(Y,("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv"), row.names=FALSE)
   
   #confidence intervals ----
   dat10 %>%
@@ -90,7 +90,7 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   CI <- data.frame(measure = names(mq), value = as.numeric(mq[1,]), escapement=rep(c(0,x), length(unique(names(mq)))))
   CI <- spread(CI, measure, value)
   CI <- CI[c("q95", "q90", "Median","q10", "q5", "escapement")]
-  write.csv(CI,("state_space_model/output/rjags_Explore_BaseCase/processed/CI.csv"), row.names=FALSE)
+  write.csv(CI,("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv"), row.names=FALSE)
   
   #create probability profile plots (0.7, 0.8, 0.9, 0.8 & 0.9)
   Y %>% 
@@ -100,7 +100,7 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     xlab('escapement (1,000)')+ylab('Probability')+
     theme(legend.justification=c(1,0), legend.position=c(1,.5), 
           legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/0.7.AR.png", dpi=200, width=8, height=5, units='in')
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.7.AR.png", dpi=200, width=8, height=5, units='in')
   
   Y %>% 
     dplyr::select(escapement, oy_0.8, of_0.8, or_0.8) %>%
@@ -109,7 +109,7 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     xlab('escapement (1,000)')+ylab('Probability')+
     theme(legend.justification=c(1,0), legend.position=c(1,.5), 
           legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/0.8.AR.png", dpi=200, width=8, height=5, units='in')
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.8.AR.png", dpi=200, width=8, height=5, units='in')
   
   Y %>% 
     dplyr::select(escapement, oy_0.9, of_0.9, or_0.9) %>% 
@@ -118,9 +118,9 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     xlab('escapement (1,000)')+ylab('Probability')+
     theme(legend.justification=c(1,0), legend.position=c(1,.5), 
           legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/0.9.AR.png", dpi=200, width=8, height=5, units='in')
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.9.AR.png", dpi=200, width=8, height=5, units='in')
   
-  read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/Y.csv") -> Y
+  read.csv("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv") -> Y
   Y %>% 
     dplyr::select(escapement, oy_0.9, oy_0.8) %>% 
     gather(key="variable", value="value", -escapement) %>% 
@@ -157,7 +157,7 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     facet_grid(sra ~ .) +geom_vline(xintercept=SMSY, lwd=1.25)+
     theme(legend.position="bottom")
   options(scipen=99999)
-  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/0.8_0.9.png", dpi=200, dev='png', width=7, height=6, units='in')
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.8_0.9.png", dpi=200, dev='png', width=7, height=6, units='in')
   
   
   ggplot(qm, aes(escapement, Median))+geom_line(size=1)+
@@ -167,6 +167,6 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     scale_x_continuous(labels = comma,breaks = seq(0, 300000, 50000), limits = c(0,300000))+
     scale_y_continuous(labels = comma,breaks = seq(-600000, 600000, 100000), limits = c(-600000,600000))+
     geom_vline(xintercept = LowerB,linetype = "longdash" )+geom_vline(xintercept = UpperB ,linetype = "longdash")
-  ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/expected_sustained_yield.png", dpi=200, width=8, height=5, units='in')}
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=200, width=8, height=5, units='in')}
 
 

@@ -21,7 +21,7 @@ statsquants <- cbind(stats,quants)
 statsquants %>% 
   as.data.frame() %>% 
   dplyr::select(Mean, SD, 'Time-series SE', '2.5%', '50%', '97.5%') %>%
-  rename(time_series_se = 'Time-series SE') %>%
+  dplyr::rename(time_series_se = 'Time-series SE') %>%
   rownames_to_column('variable') %>%
   mutate (mc_error = time_series_se/SD,
   converge = ifelse(mc_error < 0.05, "true", "false")) %>%
@@ -77,15 +77,15 @@ coda1 <- x[,1:3]
 coda2 <- x[,4:6]
 coda3 <- x[,7:9]
 coda1 %>% 
-  rename(beta = beta.1,
+  dplyr::rename(beta = beta.1,
          lnalpha = lnalpha.1,
          lnalpha.c = lnalpha.c.1)-> coda1
 coda2 %>% 
-  rename(beta = beta.2,
+  dplyr::rename(beta = beta.2,
          lnalpha = lnalpha.2,
          lnalpha.c = lnalpha.c.2) -> coda2
 coda3 %>% 
-  rename(beta = beta.3,
+  dplyr::rename(beta = beta.3,
          lnalpha = lnalpha.3,
          lnalpha.c = lnalpha.c.3) -> coda3
 coda<-rbind(coda1,coda2,coda3)
@@ -119,7 +119,7 @@ x3 %>%
   t() %>%
   as.data.frame() %>%
   rownames_to_column('variable') %>%
-  rename(Mean = 'V2',
+  dplyr::rename(Mean = 'V2',
          SD ='V1',
          perc_0 = 'V3',
          perc_2.5 = 'V4',
@@ -141,15 +141,15 @@ coda1 <- x[,1:3]
 coda2 <- x[,4:6]
 coda3 <- x[,7:9]
 coda1 %>% 
-  rename(beta = beta.1,
+  dplyr::rename(beta = beta.1,
          lnalpha = lnalpha.1,
          lnalpha.c = lnalpha.c.1)-> coda1
 coda2 %>% 
-  rename(beta = beta.2,
+  dplyr::rename(beta = beta.2,
          lnalpha = lnalpha.2,
          lnalpha.c = lnalpha.c.2) -> coda2
 coda3 %>% 
-  rename(beta = beta.3,
+  dplyr::rename(beta = beta.3,
          lnalpha = lnalpha.3,
          lnalpha.c = lnalpha.c.3) -> coda3
 coda<-rbind(coda1,coda2,coda3)
@@ -159,7 +159,7 @@ write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)
 #combine statsquants and lambert datafile----
 stats<-as.data.frame(read.csv(file=paste0(out.path, "/statsquants.csv"),header=T))
 stats %>%
-rename(perc_2.5 = 'X2.5.',
+dplyr::rename(perc_2.5 = 'X2.5.',
        perc_50 = 'X50.',
        perc_97.5 = 'X97.5.') -> stats
 lambert<-as.data.frame(read.csv(file=paste0(out.path, "/quantiles_lambert.csv"),header=T))
