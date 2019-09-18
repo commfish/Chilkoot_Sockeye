@@ -27,7 +27,7 @@ library(gdata)
 
 # if test runs then do sensitivity tests with explore, and final run with full
 # "explore" version takes ~10min with the current settings.
-out.label <-  "rjags_Explore_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
+out.label <-  "rjags_Full_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
 package.use <- "rjags"  #"rjags"  or "R2jags"
 jags.settings <- "test"  # "test" or "explore" or full" 
 
