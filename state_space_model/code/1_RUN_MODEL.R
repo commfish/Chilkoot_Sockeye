@@ -42,7 +42,7 @@ model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") #
 
 # load custom functions
 source('state_space_model/code/functions.R')
-source("state_space_model/code/MCMC_CustomFunctions.R")
+#source("state_space_model/code/MCMC_CustomFunctions.R")
 
 # define the parameters (nodes) of interest (pars to be tracked in the MCMC)
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
@@ -62,12 +62,12 @@ if(jags.settings == "explore"){
   by.use <- 100 # this is just for the progress bar
 }
 
-if(jags.settings == "large"){
-  lg.scalar <- 5
-  n.adapt.use <- 10000 ; n.iter.use <- 10000  ; 
-  n.burnin.use <- 30000  * lg.scalar  ;   thin.use = 10  
-  by.use <- 100    # this is just for the progress bar
-}
+#if(jags.settings == "large"){
+#  lg.scalar <- 5
+#  n.adapt.use <- 10000 ; n.iter.use <- 10000  ; 
+#  n.burnin.use <- 30000  * lg.scalar  ;   thin.use = 10  
+#  by.use <- 100    # this is just for the progress bar
+#}
 
 if(jags.settings == "full"){
   n.adapt.use <- 10000  ; n.iter.use <- 1000000    #1,000,000 per chain; 3 chains; thin by 1000
@@ -140,7 +140,7 @@ if(package.use == "rjags"){
 end.jags <- proc.time()   # store time for MCMC
 post.arr <- as.array(post) # convert to an accessible obj
 
-#source("state_space_model/code/2_GENERATE_OUTPUTS.R")
+source("state_space_model/code/2_GENERATE_OUTPUTS.R")
 }
 end.output  <- proc.time() 
 

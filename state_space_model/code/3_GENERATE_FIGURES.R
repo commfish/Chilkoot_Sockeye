@@ -28,7 +28,7 @@ source('state_space_model/code/functions.r')
 if(!dir.exists(file.path("state_space_model", "output", "rjags_Explore_Basecase", "processed"))){dir.create(file.path("state_space_model", "output", "rjags_Explore_Basecase", "processed"))}
 
 # data----
-parameters <- read.csv("state_space_model/data/parameters.csv") #Load Data File (make sure this file is updated)
+#parameters <- read.csv("state_space_model/data/parameters.csv") #Load Data File (make sure this file is updated)
 coda <- read.csv("state_space_model/output/rjags_Explore_Basecase/coda.csv") 
 
 # data clean----
@@ -41,10 +41,10 @@ coda %>%
                 Rmax = exp(lnalpha)*(1/beta)*exp(-1)) -> coda
 # analysis----
 # create function for probability profiles and figures
-profile(i=10, z=500, xa.start=0, xa.end=700,lnalpha.c, beta) #can change i,z, xa.start, xa.end
+profile(i=10, z=500, xa.start=0, xa.end=10000,lnalpha.c, beta) #can change i,z, xa.start, xa.end
 QM <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/QM.csv")
 CI <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/CI.csv")
-parameters <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/parameters.csv")
+parameters <- read.csv("state_space_model/data/parameters.csv")
 num <- nrow(QM)
 QM %>%
   dplyr::select(c(escapement)) -> x

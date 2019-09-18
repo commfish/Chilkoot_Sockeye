@@ -164,8 +164,8 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     geom_ribbon(aes(ymin = q5, ymax = q95), alpha=.15)+
     geom_ribbon(aes(ymin = q10, ymax = q90), alpha=.15)+ xlab('escapement (S)')+
     ylab('Expected Yield')+scale_y_continuous(labels = comma)+
-    scale_x_continuous(labels = comma,breaks = seq(0, 200000, 25000), limits = c(0,200000))+
-    scale_y_continuous(labels = comma,breaks = seq(-200000, 200000, 25000), limits = c(-200000,200000))+
+    scale_x_continuous(labels = comma,breaks = seq(0, 300000, 50000), limits = c(0,300000))+
+    scale_y_continuous(labels = comma,breaks = seq(-600000, 600000, 100000), limits = c(-600000,600000))+
     geom_vline(xintercept = LowerB,linetype = "longdash" )+geom_vline(xintercept = UpperB ,linetype = "longdash")
   ggsave("state_space_model/output/rjags_Explore_BaseCase/processed/expected_sustained_yield.png", dpi=200, width=8, height=5, units='in')}
 
