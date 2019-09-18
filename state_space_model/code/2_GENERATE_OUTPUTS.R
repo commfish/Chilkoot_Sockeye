@@ -169,19 +169,20 @@ write.csv(x, file= paste0(out.path,"/stats.csv") ,row.names=FALSE)
 #trace and density plots----
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                 "resid.red.0")
-pdf("state_space_model/output/rjags_Explore_BaseCase/density1.pdf",height=6, width=8)
+pdf("state_space_model/output/rjags_Full_BaseCase/density1.pdf",height=6, width=8)
 denplot(post, parms = c(parameters))
 dev.off()
-pdf("state_space_model/output/rjags_Explore_BaseCase/trace1.pdf",height=10, width=8,onefile=F)
+pdf("state_space_model/output/rjags_Full_BaseCase/trace1.pdf",height=10, width=8,onefile=F)
 traplot(post, parms = c(parameters))
 dev.off()
 
 # autocorrelation plots----
 windows(record=T)
-pdf("state_space_model/output/rjags_Explore_BaseCase/autocorr.pdf",height=6, width=8,onefile=T,useDingbats=F)
+pdf("state_space_model/output/rjags_Full_BaseCase/autocorr.pdf",height=6, width=8,onefile=T,useDingbats=F)
 autocorr.plot(post, lag.max=5)
 dev.off()
 dev.off()
 autocorr.summary<-autocorr.diag(post)
 autocorr.summary<-data.frame(autocorr.summary)
 write.csv(autocorr.summary, file= paste0(out.path,"/autocorr.csv")) 
+

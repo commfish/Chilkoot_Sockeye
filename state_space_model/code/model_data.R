@@ -2,6 +2,8 @@
 #and converted to JAGS by Sara Miller on 28 June 2017 and modified and
 #maintained by Rich Brenner....lots of input from Ben Williams! Thanks Ben.
 
+library(tidyverse)
+
 # data----
 brood <- read.csv("state_space_model/data/Chilkoot_Sock.csv", header = TRUE)
 brood

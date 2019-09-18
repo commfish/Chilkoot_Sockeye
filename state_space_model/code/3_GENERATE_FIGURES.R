@@ -5,17 +5,17 @@
 
 LowerB <- 38000 #lower bound of recommended escapement goal range
 UpperB <- 86000 #upper bound of recommended escapement goal range
-SMSY <- 53974 #Lambert W from AR_quantiles_lambert
-lnalpha.c <- 2.16969947667027
-lnalpha<- 2.17
-beta <- 0.0000130955503090423
+SMSY <- 53511 #Lambert W from AR_quantiles_lambert
+lnalpha.c <- 2.13974879103613
+lnalpha<- 1.65838996666292
+beta <- 1.39383584344147e-05
 
 #load----
 library(tidyverse)
 library(reshape2)
 library(extrafont)
 library(grid)
-library(plyr)
+#library(plyr)
 library(gsl)
 library(scales)
 library(ggplot2)
@@ -25,11 +25,11 @@ windowsFonts(Times=windowsFont("Times New Roman"))
 theme_set(theme_sleek())
 source('state_space_model/code/functions.r')
 
-if(!dir.exists(file.path("state_space_model", "output", "rjags_Explore_Basecase", "processed"))){dir.create(file.path("state_space_model", "output", "rjags_Explore_Basecase", "processed"))}
+if(!dir.exists(file.path("state_space_model", "output", "rjags_Full_Basecase", "processed"))){dir.create(file.path("state_space_model", "output", "rjags_Explore_Basecase", "processed"))}
 
 # data----
 parameters <- read.csv("state_space_model/data/parameters.csv") #Load Data File (make sure this file is updated)
-coda <- read.csv("state_space_model/output/rjags_Explore_Basecase/coda.csv") 
+coda <- read.csv("state_space_model/output/rjags_Full_Basecase/coda.csv") 
 
 # data clean----
 # profile parameters
@@ -42,9 +42,9 @@ coda %>%
 # analysis----
 # create function for probability profiles and figures
 profile(i=10, z=500, xa.start=0, xa.end=700,lnalpha.c, beta) #can change i,z, xa.start, xa.end
-QM <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/QM.csv")
-CI <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/CI.csv")
-parameters <- read.csv("state_space_model/output/rjags_Explore_BaseCase/processed/parameters.csv")
+QM <- read.csv("state_space_model/output/rjags_Full_BaseCase/processed/QM.csv")
+CI <- read.csv("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv")
+parameters <- read.csv("state_space_model/output/rjags_Full_BaseCase/processed/parameters.csv")
 num <- nrow(QM)
 QM %>%
   dplyr::select(c(escapement)) -> x

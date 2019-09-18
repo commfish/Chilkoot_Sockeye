@@ -27,9 +27,9 @@ library(gdata)
 
 # if test runs then do sensitivity tests with explore, and final run with full
 # "explore" version takes ~10min with the current settings.
-out.label <-  "rjags_Explore_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
+out.label <-  "rjags_Full_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "test"  # "test" or "explore" or full" 
+jags.settings <- "full"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
@@ -37,12 +37,13 @@ jags.settings <- "test"  # "test" or "explore" or full"
 # if you get a dmulti error, then the age comps are not whole numbers
 source("state_space_model/code/model_source.R") 
 print(mod)
-write.model(mod, model_file_loc)
 model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") # where to write the model file
+write.model(mod, model_file_loc)
+
 
 # load custom functions
 source('state_space_model/code/functions.R')
-source("state_space_model/code/MCMC_CustomFunctions.R")
+#source("state_space_model/code/MCMC_CustomFunctions.R")
 
 # define the parameters (nodes) of interest (pars to be tracked in the MCMC)
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
@@ -140,7 +141,7 @@ if(package.use == "rjags"){
 end.jags <- proc.time()   # store time for MCMC
 post.arr <- as.array(post) # convert to an accessible obj
 
-#source("state_space_model/code/2_GENERATE_OUTPUTS.R")
+source("state_space_model/code/2_GENERATE_OUTPUTS.R")
 }
 end.output  <- proc.time() 
 
