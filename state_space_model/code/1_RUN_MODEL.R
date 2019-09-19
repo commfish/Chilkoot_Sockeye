@@ -29,7 +29,7 @@ library(gdata)
 # "explore" version takes ~10min with the current settings.
 out.label <-  "rjags_Full_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "full"  # "test" or "explore" or full" 
+jags.settings <- "test"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
@@ -37,9 +37,8 @@ jags.settings <- "full"  # "test" or "explore" or full"
 # if you get a dmulti error, then the age comps are not whole numbers
 source("state_space_model/code/model_source.R") 
 print(mod)
-model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") # where to write the model file
 write.model(mod, model_file_loc)
-
+model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") # where to write the model file
 
 # load custom functions
 source('state_space_model/code/functions.R')
@@ -63,12 +62,12 @@ if(jags.settings == "explore"){
   by.use <- 100 # this is just for the progress bar
 }
 
-if(jags.settings == "large"){
-  lg.scalar <- 5
-  n.adapt.use <- 10000 ; n.iter.use <- 10000  ; 
-  n.burnin.use <- 30000  * lg.scalar  ;   thin.use = 10  
-  by.use <- 100    # this is just for the progress bar
-}
+#if(jags.settings == "large"){
+#  lg.scalar <- 5
+#  n.adapt.use <- 10000 ; n.iter.use <- 10000  ; 
+#  n.burnin.use <- 30000  * lg.scalar  ;   thin.use = 10  
+#  by.use <- 100    # this is just for the progress bar
+#}
 
 if(jags.settings == "full"){
   n.adapt.use <- 10000  ; n.iter.use <- 1000000    #1,000,000 per chain; 3 chains; thin by 1000
@@ -94,13 +93,13 @@ source("state_space_model/code/model_inits.R")
 start.jags <- proc.time()
 if(package.use == "R2jags"){ # new version
   r2jags.out <- R2jags::jags(data = dat , inits = inits, 
-                   parameters.to.save = parameters, model.file = mod,
-                   n.chains = 3, 
-                   n.iter = n.iter.use + n.burnin.use ,  
-                   # NOTE: R2jags uses n.iter for the TOTAL Samples, and the first n.burnin are discarded)
-                   # rjags below does the n.burnin samples first, then n.iter samples to keep
-                   n.burnin = n.burnin.use, 
-                   n.thin = thin.use, DIC = T)
+                             parameters.to.save = parameters, model.file = mod,
+                             n.chains = 3, 
+                             n.iter = n.iter.use + n.burnin.use ,  
+                             # NOTE: R2jags uses n.iter for the TOTAL Samples, and the first n.burnin are discarded)
+                             # rjags below does the n.burnin samples first, then n.iter samples to keep
+                             n.burnin = n.burnin.use, 
+                             n.thin = thin.use, DIC = T)
   end.jags <- proc.time()   # store time for MCMC
   mcmc.samples <- r2jags.out$BUGSoutput$sims.matrix
   mcmc.summary <- r2jags.out$BUGSoutput$summary 
@@ -113,21 +112,21 @@ if(package.use == "R2jags"){ # new version
   # - > not tracked in github
   write.csv(mcmc.samples, file= paste0(out.path,"/coda_allpars.csv") ,row.names=FALSE)    # writes csv file
   
-conv.pars <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
-               "resid.red.0")
+  conv.pars <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
+                 "resid.red.0")
   
-conv.details <- checkConvergence(mcmc.out = r2jags.out, vars.check = conv.pars)
-
-write.csv(conv.details,file=paste0(out.path,"/ConvergenceDetails_R2Jags.csv"), row.names=FALSE)
-
-# for now, call it converged if gelman rubin and geweke are below critical values 
-# for all the conv.pars (the acf handling is finicky)
-# Note: converged = NOT flagged
-conv.check <- !conv.details$Flag[conv.details$Check == "all.gelman.rubin"] & 
-                   !conv.details$Flag[conv.details$Check == "all.geweke"]
-
-if(conv.check){print("The R2jags model run DID CONVERGE for all the key variables!")}
-if(!conv.check){print("The R2jags model run DID NOT CONVERGE for all the key variables!")}
+  conv.details <- checkConvergence(mcmc.out = r2jags.out, vars.check = conv.pars)
+  
+  write.csv(conv.details,file=paste0(out.path,"/ConvergenceDetails_R2Jags.csv"), row.names=FALSE)
+  
+  # for now, call it converged if gelman rubin and geweke are below critical values 
+  # for all the conv.pars (the acf handling is finicky)
+  # Note: converged = NOT flagged
+  conv.check <- !conv.details$Flag[conv.details$Check == "all.gelman.rubin"] & 
+    !conv.details$Flag[conv.details$Check == "all.geweke"]
+  
+  if(conv.check){print("The R2jags model run DID CONVERGE for all the key variables!")}
+  if(!conv.check){print("The R2jags model run DID NOT CONVERGE for all the key variables!")}
 }
 
 #rjags
@@ -137,11 +136,11 @@ if(package.use == "rjags"){
   jmod <- rjags::jags.model(file='state_space_model/code/Chilkoot_sockeye.txt', data=dat, n.chains=3, inits=inits, n.adapt=n.adapt.use) 
   stats::update(jmod, n.iter=n.iter.use, by=by.use, progress.bar='text', DIC=T, n.burnin=n.burnin.use) # this modifies the original object, function returns NULL
   post <- rjags::coda.samples(jmod, parameters, n.iter=n.iter.use, thin=thin.use, n.burnin=n.burnin.use)
-
-end.jags <- proc.time()   # store time for MCMC
-post.arr <- as.array(post) # convert to an accessible obj
-
-source("state_space_model/code/2_GENERATE_OUTPUTS.R")
+  
+  end.jags <- proc.time()   # store time for MCMC
+  post.arr <- as.array(post) # convert to an accessible obj
+  
+  source("state_space_model/code/2_GENERATE_OUTPUTS.R")
 }
 end.output  <- proc.time() 
 
