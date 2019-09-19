@@ -2,8 +2,8 @@
 #(if package.use = "rjags") 
 
 # - post.samp and post 
-      # these are the mcmc.list objects created by coda.samples
-      # you can access individual variables like this: post[,"var.name"]
+# these are the mcmc.list objects created by coda.samples
+# you can access individual variables like this: post[,"var.name"]
 # - post.arr 
 # - coda
 # create coda file
@@ -21,10 +21,10 @@ statsquants <- cbind(stats,quants)
 statsquants %>% 
   as.data.frame() %>% 
   dplyr::select(Mean, SD, 'Time-series SE', '2.5%', '50%', '97.5%') %>%
-  rename(time_series_se = 'Time-series SE') %>%
+  dplyr::rename(time_series_se = 'Time-series SE') %>%
   rownames_to_column('variable') %>%
   mutate (mc_error = time_series_se/SD,
-  converge = ifelse(mc_error < 0.05, "true", "false")) %>%
+          converge = ifelse(mc_error < 0.05, "true", "false")) %>%
   write.csv(., file= paste0(out.path,"/statsquants.csv"))    
 
 # Gelman Diagnostics----
@@ -77,17 +77,17 @@ coda1 <- x[,1:3]
 coda2 <- x[,4:6]
 coda3 <- x[,7:9]
 coda1 %>% 
-  rename(beta = beta.1,
-         lnalpha = lnalpha.1,
-         lnalpha.c = lnalpha.c.1)-> coda1
+  dplyr::rename(beta = beta.1,
+                lnalpha = lnalpha.1,
+                lnalpha.c = lnalpha.c.1)-> coda1
 coda2 %>% 
-  rename(beta = beta.2,
-         lnalpha = lnalpha.2,
-         lnalpha.c = lnalpha.c.2) -> coda2
+  dplyr::rename(beta = beta.2,
+                lnalpha = lnalpha.2,
+                lnalpha.c = lnalpha.c.2) -> coda2
 coda3 %>% 
-  rename(beta = beta.3,
-         lnalpha = lnalpha.3,
-         lnalpha.c = lnalpha.c.3) -> coda3
+  dplyr::rename(beta = beta.3,
+                lnalpha = lnalpha.3,
+                lnalpha.c = lnalpha.c.3) -> coda3
 coda<-rbind(coda1,coda2,coda3)
 coda %>% 
   mutate(Smsy_lambert = (1-lambert_W0(exp(1-lnalpha.c)))/beta,
@@ -119,19 +119,19 @@ x3 %>%
   t() %>%
   as.data.frame() %>%
   rownames_to_column('variable') %>%
-  rename(Mean = 'V2',
-         SD ='V1',
-         perc_0 = 'V3',
-         perc_2.5 = 'V4',
-         perc_50 = 'V5',
-         perc_97.5 = 'V6',
-         perc_100 = 'V7') %>%
+  dplyr::rename(Mean = 'V2',
+                SD ='V1',
+                perc_0 = 'V3',
+                perc_2.5 = 'V4',
+                perc_50 = 'V5',
+                perc_97.5 = 'V6',
+                perc_100 = 'V7') %>%
   mutate (time_series_se = NaN,
           converge = NaN,
           mc_error = NaN) %>%
   dplyr::select(variable, Mean, SD, time_series_se, perc_2.5, perc_50, perc_97.5, mc_error, converge) %>%
   .[-1,] %>%
-write.csv(., file= paste0(out.path,"/quantiles_lambert.csv"))    
+  write.csv(., file= paste0(out.path,"/quantiles_lambert.csv"))    
 
 # create coda file----
 parameters=c("lnalpha", "beta", "lnalpha.c")
@@ -141,17 +141,17 @@ coda1 <- x[,1:3]
 coda2 <- x[,4:6]
 coda3 <- x[,7:9]
 coda1 %>% 
-  rename(beta = beta.1,
-         lnalpha = lnalpha.1,
-         lnalpha.c = lnalpha.c.1)-> coda1
+  dplyr::rename(beta = beta.1,
+                lnalpha = lnalpha.1,
+                lnalpha.c = lnalpha.c.1)-> coda1
 coda2 %>% 
-  rename(beta = beta.2,
-         lnalpha = lnalpha.2,
-         lnalpha.c = lnalpha.c.2) -> coda2
+  dplyr::rename(beta = beta.2,
+                lnalpha = lnalpha.2,
+                lnalpha.c = lnalpha.c.2) -> coda2
 coda3 %>% 
-  rename(beta = beta.3,
-         lnalpha = lnalpha.3,
-         lnalpha.c = lnalpha.c.3) -> coda3
+  dplyr::rename(beta = beta.3,
+                lnalpha = lnalpha.3,
+                lnalpha.c = lnalpha.c.3) -> coda3
 coda<-rbind(coda1,coda2,coda3)
 write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)   
 
@@ -159,9 +159,9 @@ write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)
 #combine statsquants and lambert datafile----
 stats<-as.data.frame(read.csv(file=paste0(out.path, "/statsquants.csv"),header=T))
 stats %>%
-rename(perc_2.5 = 'X2.5.',
-       perc_50 = 'X50.',
-       perc_97.5 = 'X97.5.') -> stats
+  dplyr::rename(perc_2.5 = 'X2.5.',
+                perc_50 = 'X50.',
+                perc_97.5 = 'X97.5.') -> stats
 lambert<-as.data.frame(read.csv(file=paste0(out.path, "/quantiles_lambert.csv"),header=T))
 rbind(stats, lambert)-> x
 write.csv(x, file= paste0(out.path,"/stats.csv") ,row.names=FALSE)  
@@ -185,4 +185,3 @@ dev.off()
 autocorr.summary<-autocorr.diag(post)
 autocorr.summary<-data.frame(autocorr.summary)
 write.csv(autocorr.summary, file= paste0(out.path,"/autocorr.csv")) 
-
