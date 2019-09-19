@@ -10,7 +10,7 @@ brood
 
 # cleanup data
 brood %>% 
-  dplyr::select(S=Spawn, R=Recruit) %>% 
+  dplyr::select(S=spawn, R=recruit) %>% 
   mutate(lnRS = log(R/S), n()) -> sr
 
 n <- nrow(sr) #calculates the number of years of data.

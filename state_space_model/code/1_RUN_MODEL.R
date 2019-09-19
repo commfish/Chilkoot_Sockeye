@@ -7,6 +7,9 @@
 # warning: some of these packages mask commands, so need to specify the package when calling the fn
 # runjags::extract vs. tidyr::extract
 # coda::traceplot vs. R2jags::traceplot
+####BE SURE TO CHECK THAT THE model_data.R FILE AND ASSOCIATED BROOD TABLE ARE UPDATED BEFORE PROCEEDING####
+
+
 library(coda)
 library(tidyverse)
 library(R2jags)
@@ -29,7 +32,7 @@ library(gdata)
 # "explore" version takes ~10min with the current settings.
 out.label <-  "rjags_Full_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "test"  # "test" or "explore" or full" 
+jags.settings <- "full"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
@@ -76,8 +79,10 @@ if(jags.settings == "full"){
 }
 
 # STEP 2: READ IN DATA, MODEL, AND INITIAL VALUES----
+######MAKE SURE THAT brood DATA and PATH ARE UPDATED!!!!#######
 # generates the object "dat"
 source("state_space_model/code/model_data.R")
+
 
 # generate initial values
 source("state_space_model/code/model_inits.R")

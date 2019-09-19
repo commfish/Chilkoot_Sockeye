@@ -5,10 +5,10 @@
 
 LowerB <- 38000 #lower bound of recommended escapement goal range
 UpperB <- 86000 #upper bound of recommended escapement goal range
-SMSY <- 53974 #Lambert W from AR_quantiles_lambert
-lnalpha.c <- 2.16969947667027
-lnalpha<- 2.17
-beta <- 0.0000130955503090423
+SMSY <- 46444 #Lambert W version of SMSY from file: AR_quantiles_lambert
+lnalpha.c <- 2.27553734008063
+lnalpha <- 1.77231610317106
+beta <- 0.0000165227395834327
 
 #load----
 library(tidyverse)
@@ -28,11 +28,11 @@ source('state_space_model/code/functions.r')
 if(!dir.exists(file.path("state_space_model", "output", "rjags_Full_Basecase", "processed"))){dir.create(file.path("state_space_model", "output", "rjags_Full_Basecase", "processed"))}
 
 # data----
-parameters <- read.csv("state_space_model/data/parameters.csv") #Load Data File (make sure this file is updated)
+spawnrecruitdat <- read.csv("state_space_model/data/Chilkoot_Sock.csv") #Load Data File (make sure this file is updated)
 coda <- read.csv("state_space_model/output/rjags_Full_Basecase/coda.csv") 
 
 # data clean----
-# profile parameters
+# profile spawnrecruitdat
 coda %>% 
   mutate(S.eq.c = lnalpha.c/beta, 
          S.msy.c = (1-lambert_W0(exp(1-lnalpha.c)))/beta, #Lambert W
@@ -65,7 +65,7 @@ QM %>%
           year = "")%>%
   rbind(., dataset) -> dataset
 
-parameters %>%
+spawnrecruitdat %>%
   mutate(escapement = spawn,
          lnalpha.c = NA,
          beta = NA,
