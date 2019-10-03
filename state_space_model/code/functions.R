@@ -71,8 +71,15 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   qm <- spread(qm, measure, value)
   qm <- qm[c("q95", "q90", "Median","q10", "q5", "escapement")]
   Y <- Y[c("oy_0.9", "oy_0.8", "or_0.9","or_0.8", "of_0.9", "of_0.8", "oy_0.7","or_0.7","of_0.7","escapement")]
+ 
+   qm <- qm %>% 
+    mutate_if(is.numeric, round, digits = 6)
   write.csv(qm,("state_space_model/output/rjags_Full_BaseCase/processed/QM.csv"), row.names=FALSE)
+  
+  Y <- Y %>% 
+    mutate_if(is.numeric, round, digits = 6)
   write.csv(Y,("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv"), row.names=FALSE)
+
   
   #confidence intervals ----
   dat10 %>%
@@ -90,6 +97,9 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   CI <- data.frame(measure = names(mq), value = as.numeric(mq[1,]), escapement=rep(c(0,x), length(unique(names(mq)))))
   CI <- spread(CI, measure, value)
   CI <- CI[c("q95", "q90", "Median","q10", "q5", "escapement")]
+  
+  CI <- CI %>% 
+    mutate_if(is.numeric, round, digits = 6)
   write.csv(CI,("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv"), row.names=FALSE)
   
   #create probability profile plots (0.7, 0.8, 0.9, 0.8 & 0.9)
@@ -168,5 +178,7 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
     scale_y_continuous(labels = comma,breaks = seq(-600000, 600000, 100000), limits = c(-600000,600000))+
     geom_vline(xintercept = LowerB,linetype = "longdash" )+geom_vline(xintercept = UpperB ,linetype = "longdash")
   ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=200, width=8, height=5, units='in')}
+
+
 
 
