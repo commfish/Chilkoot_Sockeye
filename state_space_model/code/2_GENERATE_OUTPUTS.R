@@ -94,6 +94,63 @@ x3 %>%
 rbind(statsquants, quantiles_lambert) %>%
 write.csv(., file= paste0(out.path,"/stats.csv") ,row.names=FALSE)
 
+# lambert density plot----
+parameters=c("lnalpha", "beta", "lnalpha.c")
+x <- as.data.frame(post.arr[,parameters,])
+coda1 <- x[,1:3]
+coda2 <- x[,4:6]
+coda3 <- x[,7:9]
+coda1 %>% 
+  dplyr::rename(beta = beta.1,
+                lnalpha = lnalpha.1,
+                lnalpha.c = lnalpha.c.1) -> coda1
+coda2 %>% 
+  dplyr::rename(beta = beta.2,
+                lnalpha = lnalpha.2,
+                lnalpha.c = lnalpha.c.2) -> coda2
+coda3 %>% 
+  dplyr::rename(beta = beta.3,
+                lnalpha = lnalpha.3,
+                lnalpha.c = lnalpha.c.3) -> coda3
+coda <- rbind(coda1, coda2, coda3)
+coda %>% 
+  mutate(Smsy = (1-lambert_W0(exp(1-lnalpha.c)))/beta,
+         Umsy = (1-lambert_W0(exp(1-lnalpha.c))))  %>%
+  as.data.frame() -> coda
+coda %>% 
+  dplyr::select(Smsy) -> Smsy
+coda %>% 
+  dplyr::select(Umsy) -> Umsy
+
+#denplot(Smsy, style="plain",  col="gray30", xlim=)
+options(scipen=999)
+ggplot(Smsy, aes(x=Smsy, fill=Smsy, color = Smsy)) +
+  geom_density(fill ="#999999", alpha=0.5)+
+  scale_color_manual(values=c("#999999"))+
+  scale_fill_manual(values=c("#999999"))+
+  geom_vline(xintercept = 43857,linetype = "longdash" ) +
+  labs(x="Smsy",y="Density") + theme_set(theme_bw(base_size=14,base_family=
+                                                    'Arial') +
+                                           theme(panel.grid.major = element_blank(),
+                                                 panel.grid.minor = element_blank())) + theme(legend.position="none") + 
+  scale_x_continuous(labels = scales::comma, breaks = seq(0, 150000, 25000), limits = c(0, 150000)) -> plot1
+
+ggplot(Umsy, aes(x=Umsy, fill=Umsy)) +
+  geom_density(fill ="#999999", alpha=0.5)+
+  scale_color_manual(values=c("#999999")) +
+  scale_fill_manual(values=c("#999999")) + geom_vline(xintercept = 0.75,linetype = "longdash" ) +
+  labs(x="Umsy",y="Density") + theme_set(theme_bw(base_size=14,base_family=
+                                                    'Arial')+
+                                           theme(panel.grid.major = element_blank(),
+                                                 panel.grid.minor = element_blank())) + theme(legend.position="none") + 
+  scale_x_continuous(breaks = seq(0, 1, 0.25), limits = c(0, 1)) -> plot2
+
+png(file='state_space_model/output/rjags_Full_BaseCase/density.png', res=500, width=8, height=9, units ="in") 
+plot_grid(plot1, plot2,  labels = c("A", "B", "C"), ncol = 1, align="v",hjust=-8,
+          vjust=2, label_size=14)
+dev.off()
+
+
 # 90th and 95th percentiles of output quants----
 parameters = c('MSY')
 x <- post.arr[,parameters,]
@@ -226,9 +283,6 @@ coda3 %>%
 coda<-rbind(coda1,coda2,coda3)
 write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)   
 
-
-  
-
 #trace and density plots----
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                 "resid.red.0")
@@ -237,6 +291,11 @@ denplot(post, parms = c(parameters))
 dev.off()
 pdf("state_space_model/output/rjags_Full_BaseCase/trace.pdf",height=10, width=8,onefile=F)
 traplot(post, parms = c(parameters))
+dev.off()
+parameters <- c("lnalpha","beta", "sigma.red","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","sigma.white",
+                "resid.red.0")
+png("state_space_model/output/rjags_Full_BaseCase/density_other.png",res=500, width=8, height=9, units ="in")
+denplot(post, parms = c(parameters), style="plain", greek=TRUE, col="gray30", collapse =T)
 dev.off()
 
 # autocorrelation plots----
