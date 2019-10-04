@@ -95,6 +95,7 @@ rbind(statsquants, quantiles_lambert) %>%
 write.csv(., file= paste0(out.path,"/stats.csv") ,row.names=FALSE)
 
 # lambert density plot----
+#may have to run this twice??
 parameters=c("lnalpha", "beta", "lnalpha.c")
 x <- as.data.frame(post.arr[,parameters,])
 coda1 <- x[,1:3]
@@ -144,12 +145,10 @@ ggplot(Umsy, aes(x=Umsy, fill=Umsy)) +
                                            theme(panel.grid.major = element_blank(),
                                                  panel.grid.minor = element_blank())) + theme(legend.position="none") + 
   scale_x_continuous(breaks = seq(0, 1, 0.25), limits = c(0, 1)) -> plot2
-
-png(file='state_space_model/output/rjags_Full_BaseCase/density.png', res=500, width=8, height=9, units ="in") 
+png(file= paste0(out.path,"/density",".png"),res=500, width=8, height=9, units ="in")
 plot_grid(plot1, plot2,  labels = c("A", "B", "C"), ncol = 1, align="v",hjust=-8,
           vjust=2, label_size=14)
 dev.off()
-
 
 # 90th and 95th percentiles of output quants----
 parameters = c('MSY')
@@ -257,7 +256,7 @@ cbind(., df)%>%
   dplyr::select(-variable1) %>%
   write.csv(., paste0(out.path,"/geweke.csv")) 
 
-pdf("state_space_model/output/rjags_Full_BaseCase/geweke.pdf",height=10, width=8,onefile=T)
+pdf(file= paste0(out.path,"/geweke",".pdf"), height=10, width=8,onefile=T)
 geweke.plot(post)
 dev.off()
 
@@ -286,23 +285,18 @@ write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)
 #trace and density plots----
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                 "resid.red.0")
-pdf("state_space_model/output/rjags_Full_BaseCase/density.pdf",height=6, width=8)
-denplot(post, parms = c(parameters))
-dev.off()
-pdf("state_space_model/output/rjags_Full_BaseCase/trace.pdf",height=10, width=8,onefile=F)
-traplot(post, parms = c(parameters))
-dev.off()
-parameters <- c("lnalpha","beta", "sigma.red","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","sigma.white",
-                "resid.red.0")
-png("state_space_model/output/rjags_Full_BaseCase/density_other.png",res=500, width=8, height=9, units ="in")
+png(file= paste0(out.path,"/density_plot",".png"), res=500, height=6, width=8, units ="in")
 denplot(post, parms = c(parameters), style="plain", greek=TRUE, col="gray30", collapse =T)
+dev.off()
+
+pdf(file= paste0(out.path,"/trace_plot",".pdf"), height=6, width=8)
+traplot(post, parms = c(parameters))
 dev.off()
 
 # autocorrelation plots----
 windows(record=T)
-pdf("state_space_model/output/rjags_Full_BaseCase/autocorr.pdf",height=6, width=8,onefile=T,useDingbats=F)
+pdf(file= paste0(out.path,"/autocorrelation",".pdf"), height=6, width=8,onefile=T,useDingbats=F)
 autocorr.plot(post, lag.max=5)
-dev.off()
 dev.off()
 autocorr.summary<-autocorr.diag(post)
 autocorr.summary<-data.frame(autocorr.summary)

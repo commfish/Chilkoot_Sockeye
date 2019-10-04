@@ -9,7 +9,7 @@
 # coda::traceplot vs. R2jags::traceplot
 ####BE SURE TO CHECK THAT THE model_data.R FILE AND ASSOCIATED BROOD TABLE ARE UPDATED BEFORE PROCEEDING####
 
-
+# load libraries----
 library(coda)
 library(tidyverse)
 library(R2jags)
@@ -25,14 +25,16 @@ library(stringr)
 library(arm)
 library(lmtest)
 library(gdata)
+library(cowplot)
+library(ggplot2)
 
 # STEP 1: CHOOSE SETTINGS----
 
 # if test runs then do sensitivity tests with explore, and final run with full
 # "explore" version takes ~10min with the current settings.
-out.label <-  "rjags_Full_BaseCase" #"R2Jags_Explore_BaseCase" or #"rjags_Explore_BaseCase" # label to be used for the output folder (and for scenario comparisons)
+out.label <-  "rjags_Full_BaseCase" 
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "full"  # "test" or "explore" or full" 
+jags.settings <- "test"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
@@ -65,13 +67,6 @@ if(jags.settings == "explore"){
   by.use <- 100 # this is just for the progress bar
 }
 
-#if(jags.settings == "large"){
-#  lg.scalar <- 5
-#  n.adapt.use <- 10000 ; n.iter.use <- 10000  ; 
-#  n.burnin.use <- 30000  * lg.scalar  ;   thin.use = 10  
-#  by.use <- 100    # this is just for the progress bar
-#}
-
 if(jags.settings == "full"){
   n.adapt.use <- 10000  ; n.iter.use <- 4000000    #1,000,000 per chain; 3 chains; thin by 1000
   n.burnin.use <- 2000000  # consider increasing this?
@@ -82,7 +77,6 @@ if(jags.settings == "full"){
 ######MAKE SURE THAT brood DATA and PATH ARE UPDATED!!!!#######
 # generates the object "dat"
 source("state_space_model/code/model_data.R")
-
 
 # generate initial values
 source("state_space_model/code/model_inits.R")
