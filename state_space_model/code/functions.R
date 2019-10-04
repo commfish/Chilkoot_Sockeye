@@ -81,79 +81,57 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   write.csv(Y,("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv"), row.names=FALSE)
 
   
-  #confidence intervals ----
-  dat10 %>%
-    summarise_all(funs(median = median, 
+# confidence intervals ----
+dat10 %>%
+  summarise_all(funs(median = median, 
                        q95=quantile(., 0.95, na.rm=T), 
                        q90=quantile(., 0.90, na.rm=T),
                        q10=quantile(., 0.10, na.rm=T),
                        q5=quantile(., 0.05, na.rm=T))) -> mq
-  names(mq) <- c(rep(('Median'),length(x)+1), 
+names(mq) <- c(rep(('Median'),length(x)+1), 
                  rep(('q95'),length(x)+1), 
                  rep(('q90'),length(x)+1), 
                  rep(('q10'),length(x)+1), 
                  rep(('q5'),length(x)+1))
   
-  CI <- data.frame(measure = names(mq), value = as.numeric(mq[1,]), escapement=rep(c(0,x), length(unique(names(mq)))))
-  CI <- spread(CI, measure, value)
-  CI <- CI[c("q95", "q90", "Median","q10", "q5", "escapement")]
+CI <- data.frame(measure = names(mq), value = as.numeric(mq[1,]), escapement=rep(c(0,x), length(unique(names(mq)))))
+CI <- spread(CI, measure, value)
+CI <- CI[c("q95", "q90", "Median","q10", "q5", "escapement")]
   
-  CI <- CI %>% 
+CI <- CI %>% 
     mutate_if(is.numeric, round, digits = 6)
-  write.csv(CI,("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv"), row.names=FALSE)
+write.csv(CI,("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv"), row.names=FALSE)
   
-  #create probability profile plots (0.7, 0.8, 0.9, 0.8 & 0.9)
-  Y %>% 
-    dplyr::select(escapement, oy_0.7, of_0.7,or_0.7) %>% 
-    gather(key="variable", value="value", -escapement) %>% 
-    ggplot(aes(escapement/1000, value, lty=variable))+geom_line()+
-    xlab('escapement (1,000)')+ylab('Probability')+
-    theme(legend.justification=c(1,0), legend.position=c(1,.5), 
-          legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.7.AR.png", dpi=200, width=8, height=5, units='in')
-  
-  Y %>% 
-    dplyr::select(escapement, oy_0.8, of_0.8, or_0.8) %>%
-    gather(key="variable", value="value", -escapement) %>% 
-    ggplot(aes(escapement/1000, value, lty=variable))+geom_line()+
-    xlab('escapement (1,000)')+ylab('Probability')+
-    theme(legend.justification=c(1,0), legend.position=c(1,.5), 
-          legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.8.AR.png", dpi=200, width=8, height=5, units='in')
-  
-  Y %>% 
-    dplyr::select(escapement, oy_0.9, of_0.9, or_0.9) %>% 
-    gather(key="variable", value="value", -escapement) %>% 
-    ggplot(aes(escapement/1000, value, lty=variable))+geom_line()+
-    xlab('escapement (1,000)')+ylab('Probability')+
-    theme(legend.justification=c(1,0), legend.position=c(1,.5), 
-          legend.key = element_blank(),legend.title=element_blank())
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.9.AR.png", dpi=200, width=8, height=5, units='in')
-  
-  read.csv("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv") -> Y
-  Y %>% 
-    dplyr::select(escapement, oy_0.9, oy_0.8) %>% 
+read.csv("state_space_model/output/rjags_Full_BaseCase/processed/Y.csv") -> Y
+
+Y %>% 
+    dplyr::select(escapement, oy_0.9, oy_0.8, oy_0.7) %>% 
     gather(key="variable", value="value", -escapement) %>% 
     mutate(sra = "Yield Profile",
-           max_pct =ifelse(grepl("oy_0.8",variable), 
-                           0.8,0.9))-> my1
+           max_pct =ifelse(grepl("oy_0.7",variable), 
+                           0.7,
+                           ifelse(grepl("oy_0.8",variable),0.8, 0.9 )))-> my1
   
-  Y %>% 
-    dplyr::select(escapement, of_0.9, of_0.8) %>% 
+Y %>% 
+    dplyr::select(escapement, of_0.9, of_0.8, of_0.7) %>% 
     gather(key="variable", value="value", -escapement) %>% 
     mutate(sra = "Overfishing Profile",
-           max_pct =ifelse(grepl("of_0.8",variable), 
-                           0.8,0.9))-> my2
+           max_pct =ifelse(grepl("of_0.7",variable), 
+                           0.7,
+                           ifelse(grepl("of_0.8",variable),0.8, 0.9)))-> my2
   
-  Y %>% 
-    dplyr::select(escapement, or_0.9, or_0.8) %>% 
+  
+Y %>% 
+    dplyr::select(escapement, or_0.9, or_0.8, or_0.7) %>% 
     gather(key="variable", value="value", -escapement) %>% 
     mutate(sra = "Recruitment Profile",
-           max_pct =ifelse(grepl("or_0.8",variable), 
-                           0.8,0.9))-> my3
+           max_pct =ifelse(grepl("or_0.7",variable), 
+                           0.7,
+                           ifelse(grepl("or_0.8",variable),0.8, 0.9 )))-> my3
   
-  my4<-rbind(my1, my2, my3)
-  my4 %>%
+my4<-rbind(my1, my2, my3)
+  
+my4 %>%
     dplyr::select(escapement, variable, value, sra, max_pct) %>%
     mutate(escapement = as.numeric(escapement),
            Probability = as.numeric(value),
@@ -161,23 +139,22 @@ profile <-function(i,z,xa.start, xa.end,lnalpha.c, beta){
   ggplot(my4, aes(x = escapement, y = Probability, linetype = max_pct)) + 
     geom_rect(aes(xmin = LowerB, xmax = UpperB, ymin = 0, ymax = 1),
               inherit.aes = FALSE, fill = "grey80", alpha = 0.3) +
-    geom_line()+xlab('escapement (S)')+
+    geom_line()+xlab('Escapement (S)')+
     scale_x_continuous(labels = comma, breaks = seq(0, 200000, 25000), limits = c(0, 200000))+
     scale_linetype_discrete(name = "Percent of Max.")+
     facet_grid(sra ~ .) +geom_vline(xintercept=SMSY, lwd=1.25)+
-    theme(legend.position="bottom")
+    theme(legend.position="bottom") + theme(legend.title=element_blank())
   options(scipen=99999)
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.8_0.9.png", dpi=200, dev='png', width=7, height=6, units='in')
-  
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/0.8_0.9_0.7.png", dpi=500, dev='png', width=7, height=6, units='in')
   
   ggplot(qm, aes(escapement, Median))+geom_line(size=1)+
     geom_ribbon(aes(ymin = q5, ymax = q95), alpha=.15)+
-    geom_ribbon(aes(ymin = q10, ymax = q90), alpha=.15)+ xlab('escapement (S)')+
+    geom_ribbon(aes(ymin = q10, ymax = q90), alpha=.15)+ xlab('Escapement (S)')+
     ylab('Expected Yield')+scale_y_continuous(labels = comma)+
     scale_x_continuous(labels = comma,breaks = seq(0, 300000, 50000), limits = c(0,300000))+
     scale_y_continuous(labels = comma,breaks = seq(-600000, 600000, 100000), limits = c(-600000,600000))+
     geom_vline(xintercept = LowerB,linetype = "longdash" )+geom_vline(xintercept = UpperB ,linetype = "longdash")
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=200, width=8, height=5, units='in')}
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=500, width=8, height=5, units='in')}
 
 
 
