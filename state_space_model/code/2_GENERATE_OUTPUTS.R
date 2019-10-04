@@ -25,50 +25,10 @@ statsquants %>%
   rownames_to_column('variable') %>%
   mutate (mc_error = time_series_se/SD,
           converge = ifelse(mc_error < 0.05, "true", "false")) %>%
-  write.csv(., file= paste0(out.path,"/statsquants.csv"))    
-
-# Gelman Diagnostics----
-gel <- as.data.frame(gelman.diag(post, multivariate=F)[[1]])
-poor.threshold = 1.2 #values less than 1.2 are generally considered converged
-gel %>%
-  rownames_to_column('variable') %>%
-  mutate(point_estimate = "Point est.") %>%
-  mutate (converge = ifelse(point_estimate < poor.threshold, "true", "false")) %>%
-  write.csv(., file= paste0(out.path,"/gelman.csv") )   
-
-# Geweke Diagnostics----
-#Examine convergence of the Markov chains using the Geweke's convergence diagnostic
-#a convergence diagnostic for Markov chains based on a test for equality 
-#of the means of the ﬁrst and last part of a Markov chain (by default the ﬁrst 10% and the last 50%).
-#As for a cut-off you can compare to the standard normal critical values z α/2 where α=0.05
-#null hypothesis is rejected if Z large
-# Geweke diagnostic
-l <- geweke.diag(post)
-df <- data.frame(matrix(unlist(l), nrow=length(l), byrow=T),stringsAsFactors=FALSE)
-df <- t(df) %>%
-  as.data.frame() %>%
-  rownames_to_column('variable1') -> df
-colnames(df) <- c("variable1", "chain1", "chain2", "chain3")
-names <-read.csv(file = paste0(out.path,"/statsquants.csv"))
-names  %>%
-  dplyr::select(variable) %>% 
-  add_row(variable = "frac1") %>% #0.1 and 0.5 default
-  add_row(variable = "frac2")  -> names
-x <- cbind(names, df)
-x  %>% 
-  dplyr::select(-variable1) %>%
-  write.csv(., paste0(out.path,"/geweke.csv")) 
-
-# SMSY 15th and 65th percentile method----
-parameters=c('S.msy')
-x <- post.arr[,parameters,]
-S.MSY<-quantile(x, probs=c(0,0.15,0.50,0.65,1))
-S.MSY <- data.frame(S.MSY )
-write.csv(S.MSY, file= paste0(out.path,"/percentile_method.csv"))
-png(paste0(out.path,"/S.MSY.png"), res=600, height=4.5, width=8, units="in")
-plot(post[,parameters]) 
-dev.off()
-
+  dplyr::rename(perc_2.5 = '2.5%',
+                perc_50 = '50%',
+                perc_97.5 = '97.5%') %>%
+  dplyr::select(variable, Mean, SD, time_series_se, perc_2.5, perc_50, perc_97.5, mc_error, converge) -> statsquants
 
 # lambert calc----
 parameters=c("lnalpha", "beta", "lnalpha.c")
@@ -130,8 +90,119 @@ x3 %>%
           converge = NaN,
           mc_error = NaN) %>%
   dplyr::select(variable, Mean, SD, time_series_se, perc_2.5, perc_50, perc_97.5, mc_error, converge) %>%
-  .[-1,] %>%
-  write.csv(., file= paste0(out.path,"/quantiles_lambert.csv"))    
+  .[-1,] -> quantiles_lambert
+rbind(statsquants, quantiles_lambert) %>%
+write.csv(., file= paste0(out.path,"/stats.csv") ,row.names=FALSE)
+
+# 90th and 95th percentiles of output quants----
+parameters = c('MSY')
+x <- post.arr[,parameters,]
+MSY <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+MSY <- data.frame(MSY)
+
+parameters = c('S.eq')
+x <- post.arr[,parameters,]
+S.eq <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+S.eq <- data.frame(S.eq)
+
+parameters = c('S.max')
+x <- post.arr[,parameters,]
+S.max <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+S.max <- data.frame(S.max)
+
+parameters = c('S.msy')
+x <- post.arr[,parameters,]
+S.msy <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+S.msy  <- data.frame(S.msy)
+
+parameters = c('U.msy')
+x <- post.arr[,parameters,]
+U.msy <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+U.msy <- data.frame(U.msy)
+
+parameters = c('alpha')
+x <- post.arr[,parameters,]
+alpha <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+alpha <- data.frame(alpha)
+
+parameters = c('beta')
+x <- post.arr[,parameters,]
+beta <-quantile(x, probs=c(0,0.025, 0.05, 0.5, 0.95, 0.975, 1))
+beta <- data.frame(beta)
+
+parameters = c('lnalpha')
+x <- post.arr[,parameters,]
+lnalpha <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+lnalpha <- data.frame(lnalpha)
+
+parameters = c('lnalpha.c')
+x <- post.arr[,parameters,]
+lnalpha.c <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+lnalpha.c <- data.frame(lnalpha.c)
+
+parameters = c('resid.red.0')
+x <- post.arr[,parameters,]
+resid.red.0 <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+resid.red.0 <- data.frame(resid.red.0)
+
+parameters = c('sigma.red')
+x <- post.arr[,parameters,]
+sigma.red <- quantile(x, probs=c(0,0.025, 0.05, 0.5, 0.95, 0.975, 1))
+sigma.red <- data.frame(sigma.red)
+
+parameters = c('sigma.white')
+x <- post.arr[,parameters,]
+sigma.white <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+sigma.white <- data.frame(sigma.white)
+
+step1 <- cbind(MSY, S.eq)
+step2 <- cbind(step1, S.max)
+step3 <- cbind(step2, S.msy)
+step4 <- cbind(step3, U.msy)
+step5 <- cbind(step4, alpha)
+step6 <- cbind(step5, beta)
+step7 <- cbind(step6, lnalpha)
+step8 <- cbind(step7, lnalpha.c)
+step9 <- cbind(step8, resid.red.0)
+step10 <- cbind(step9,  sigma.red)
+step11 <- cbind(step10,  sigma.white)
+step11 %>% 
+  t()%>%
+  write.csv(., file= paste0(out.path,"/percentiles.csv")) 
+
+# Gelman Diagnostics----
+gel <- as.data.frame(gelman.diag(post, multivariate=F)[[1]])
+poor.threshold = 1.2 #values less than 1.2 are generally considered converged
+gel %>%
+  rownames_to_column('variable') %>%
+  dplyr::rename(point_estimate = "Point est.") %>%
+  mutate (converge = ifelse(point_estimate < poor.threshold, "true", "false")) %>%
+  write.csv(., file= paste0(out.path,"/gelman.csv"))   
+
+# Geweke Diagnostics----
+#Examine convergence of the Markov chains using the Geweke's convergence diagnostic
+#a convergence diagnostic for Markov chains based on a test for equality 
+#of the means of the ﬁrst and last part of a Markov chain (by default the ﬁrst 10% and the last 50%).
+#As for a cut-off you can compare to the standard normal critical values z α/2 where α=0.05
+#null hypothesis is rejected if Z large
+# Geweke diagnostic
+l <- geweke.diag(post)
+df <- data.frame(matrix(unlist(l), nrow=length(l), byrow=T),stringsAsFactors=FALSE)
+df <- t(df) %>%
+  as.data.frame() %>%
+  rownames_to_column('variable1') -> df
+colnames(df) <- c("variable1", "chain1", "chain2", "chain3")
+statsquants %>%
+  dplyr::select(variable) %>% 
+  add_row(variable = "frac1") %>% #0.1 and 0.5 default
+  add_row(variable = "frac2") %>%
+cbind(., df)%>% 
+  dplyr::select(-variable1) %>%
+  write.csv(., paste0(out.path,"/geweke.csv")) 
+
+pdf("state_space_model/output/rjags_Full_BaseCase/geweke.pdf",height=10, width=8,onefile=T)
+geweke.plot(post)
+dev.off()
 
 # create coda file----
 parameters=c("lnalpha", "beta", "lnalpha.c")
@@ -156,23 +227,15 @@ coda<-rbind(coda1,coda2,coda3)
 write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)   
 
 
-#combine statsquants and lambert datafile----
-stats<-as.data.frame(read.csv(file=paste0(out.path, "/statsquants.csv"),header=T))
-stats %>%
-  dplyr::rename(perc_2.5 = 'X2.5.',
-                perc_50 = 'X50.',
-                perc_97.5 = 'X97.5.') -> stats
-lambert<-as.data.frame(read.csv(file=paste0(out.path, "/quantiles_lambert.csv"),header=T))
-rbind(stats, lambert)-> x
-write.csv(x, file= paste0(out.path,"/stats.csv") ,row.names=FALSE)  
+  
 
 #trace and density plots----
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                 "resid.red.0")
-pdf("state_space_model/output/rjags_Full_BaseCase/density1.pdf",height=6, width=8)
+pdf("state_space_model/output/rjags_Full_BaseCase/density.pdf",height=6, width=8)
 denplot(post, parms = c(parameters))
 dev.off()
-pdf("state_space_model/output/rjags_Full_BaseCase/trace1.pdf",height=10, width=8,onefile=F)
+pdf("state_space_model/output/rjags_Full_BaseCase/trace.pdf",height=10, width=8,onefile=F)
 traplot(post, parms = c(parameters))
 dev.off()
 
