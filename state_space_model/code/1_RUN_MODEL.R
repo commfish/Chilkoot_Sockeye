@@ -45,10 +45,6 @@ print(mod)
 write.model(mod, model_file_loc)
 model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") # where to write the model file
 
-# load custom functions
-source('state_space_model/code/functions.R')
-#source("state_space_model/code/MCMC_CustomFunctions.R")
-
 # define the parameters (nodes) of interest (pars to be tracked in the MCMC)
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
                 "resid.red.0")
