@@ -18,15 +18,12 @@ library(runjags)
 library(R2OpenBUGS)
 library(mcmcplots)
 library(gsl)
-library(tibble)
-library(dplyr)
-library(tidyr)
 library(stringr)
 library(arm)
 library(lmtest)
 library(gdata)
 library(cowplot)
-library(ggplot2)
+
 
 # STEP 1: CHOOSE SETTINGS----
 
@@ -34,7 +31,7 @@ library(ggplot2)
 # "explore" version takes ~10min with the current settings.
 out.label <-  "rjags_Full_BaseCase" 
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "test"  # "test" or "explore" or full" 
+jags.settings <- "full"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version

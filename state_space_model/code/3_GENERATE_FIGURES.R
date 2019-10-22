@@ -5,23 +5,23 @@
 
 LowerB <- 38000 #lower bound of recommended escapement goal range
 UpperB <- 86000 #upper bound of recommended escapement goal range
-SMSY <- 46444 #Lambert W version of SMSY from file: AR_quantiles_lambert
-lnalpha.c <- 2.27553734008063
-lnalpha <- 1.77231610317106
-beta <- 0.0000165227395834327
+SMSY <- 46320.72 #Lambert W version of SMSY from file: AR_quantiles_lambert
+lnalpha.c <- 2.245521214
+lnalpha <- 1.776026162
+beta <- 0.00001651399844
+
 
 #load----
+library(plyr)
 library(tidyverse)
 library(reshape2)
-library(extrafont)
 library(grid)
-library(plyr)
 library(gsl)
 library(scales)
-library(ggplot2)
+library(backports)
 library(FNGr)
 library(FField)
-windowsFonts(Times=windowsFont("Times New Roman"))
+
 theme_set(theme_sleek())
 source('state_space_model/code/functions.r')
 
