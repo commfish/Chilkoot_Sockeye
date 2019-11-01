@@ -5,10 +5,10 @@
 
 LowerB <- 38000 #lower bound of recommended escapement goal range
 UpperB <- 86000 #upper bound of recommended escapement goal range
-SMSY <- 46320.72 #Lambert W version of SMSY from file: AR_quantiles_lambert
-lnalpha.c <- 2.245521214
-lnalpha <- 1.776026162
-beta <- 0.00001651399844
+SMSY <- 52774.07 #Lambert W version of SMSY from file: AR_quantiles_lambert
+lnalpha.c <- 2.143810675
+lnalpha <- 1.685389252
+beta <- 0.000014123254157  #let's try and grab these last 4 parameter outputs from the "stats.csv" output
 
 
 #load----
