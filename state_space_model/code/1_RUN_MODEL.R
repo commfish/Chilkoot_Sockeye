@@ -24,14 +24,13 @@ library(lmtest)
 library(gdata)
 library(cowplot)
 
-
 # STEP 1: CHOOSE SETTINGS----
 
 # if test runs then do sensitivity tests with explore, and final run with full
 # "explore" version takes ~10min with the current settings.
 out.label <-  "rjags_Full_BaseCase" 
 package.use <- "rjags"  #"rjags"  or "R2jags"
-jags.settings <- "full"  # "test" or "explore" or full" 
+jags.settings <- "test"  # "test" or "explore" or full" 
 
 # source the model file (this reads in a function called "mod")
 # then write the model to a text file to be called by JAGS if using rjags version
