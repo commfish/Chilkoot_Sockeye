@@ -44,7 +44,7 @@ model_file_loc=paste("state_space_model/code/","Chilkoot_sockeye.txt", sep="") #
 
 # define the parameters (nodes) of interest (pars to be tracked in the MCMC)
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
-                "resid.red.0")
+                "resid.red.0", "phi")
 
 # create output folder for model results
 out.path <- paste0("state_space_model/output/", out.label)
@@ -105,7 +105,7 @@ if(package.use == "R2jags"){ # new version
   write.csv(mcmc.samples, file= paste0(out.path,"/coda_allpars.csv") ,row.names=FALSE)    # writes csv file
   
   conv.pars <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
-                 "resid.red.0")
+                 "resid.red.0", "phi")
   
   conv.details <- checkConvergence(mcmc.out = r2jags.out, vars.check = conv.pars)
   
@@ -124,7 +124,7 @@ if(package.use == "R2jags"){ # new version
 #rjags
 if(package.use == "rjags"){
   parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
-                  "resid.red.0")
+                  "resid.red.0", "phi")
   jmod <- rjags::jags.model(file='state_space_model/code/Chilkoot_sockeye.txt', data=dat, n.chains=3, inits=inits, n.adapt=n.adapt.use) 
   stats::update(jmod, n.iter=n.iter.use, by=by.use, progress.bar='text', DIC=T, n.burnin=n.burnin.use) # this modifies the original object, function returns NULL
   post <- rjags::coda.samples(jmod, parameters, n.iter=n.iter.use, thin=thin.use, n.burnin=n.burnin.use)

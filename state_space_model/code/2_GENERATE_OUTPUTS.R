@@ -51,10 +51,9 @@ coda3 %>%
 coda<-rbind(coda1,coda2,coda3)
 coda %>% 
   mutate(Smsy_lambert = (1-lambert_W0(exp(1-lnalpha.c)))/beta,
-         Umsy_lambert = (1-lambert_W0(exp(1-lnalpha.c))),
-         Smsy_lambert80 = Smsy_lambert *0.80)  %>%
+         Umsy_lambert = (1-lambert_W0(exp(1-lnalpha.c)))) %>%
   as.data.frame() %>%
-  dplyr::select(Smsy_lambert,Umsy_lambert, Smsy_lambert80) -> coda
+  dplyr::select(Smsy_lambert,Umsy_lambert) -> coda
 coda %>% 
   apply(., 2, sd) %>%
   as.data.frame()%>%
@@ -211,6 +210,11 @@ x <- post.arr[,parameters,]
 sigma.white <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
 sigma.white <- data.frame(sigma.white)
 
+parameters = c('phi')
+x <- post.arr[,parameters,]
+phi <- quantile(x, probs=c(0, 0.025, 0.05, 0.5, 0.95, 0.975, 1))
+phi <- data.frame(phi)
+
 step1 <- cbind(MSY, S.eq)
 step2 <- cbind(step1, S.max)
 step3 <- cbind(step2, S.msy)
@@ -222,7 +226,8 @@ step8 <- cbind(step7, lnalpha.c)
 step9 <- cbind(step8, resid.red.0)
 step10 <- cbind(step9,  sigma.red)
 step11 <- cbind(step10,  sigma.white)
-step11 %>% 
+step12 <- cbind(step11,  phi)
+step12 %>% 
   t()%>%
   write.csv(., file= paste0(out.path,"/percentiles.csv")) 
 
@@ -284,7 +289,7 @@ write.csv(coda, file= paste0(out.path,"/coda.csv") ,row.names=FALSE)
 
 #trace and density plots----
 parameters <- c("lnalpha","beta", "sigma.red","S.msy","MSY", "lnalpha.c", "alpha", "S.max", "S.eq","U.msy", "sigma.white",
-                "resid.red.0")
+                "resid.red.0", "phi")
 png(file= paste0(out.path,"/density_plot",".png"), res=500, height=6, width=8, units ="in")
 denplot(post, parms = c(parameters), style="plain", greek=TRUE, col="gray30", collapse =T)
 dev.off()
