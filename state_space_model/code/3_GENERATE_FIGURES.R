@@ -22,7 +22,7 @@ library(backports)
 devtools::install_github("commfish/fngr")
 library(fngr)
 library(FField)
-
+#font_import() # only need run once
 theme_set(theme_sleek())
 source('state_space_model/code/functions.r')
 
