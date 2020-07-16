@@ -23,7 +23,9 @@ devtools::install_github("commfish/fngr")
 library(fngr)
 library(FField)
 #font_import() # only need run once
-theme_set(theme_sleek())
+extrafont::font_import()
+windowsFonts(Times=windowsFont("TT Times New Roman"))
+theme_set(theme_report(base_size = 14))
 source('state_space_model/code/functions.r')
 
 if(!dir.exists(file.path("state_space_model", "output", "rjags_Full_Basecase", "processed"))){dir.create(file.path("state_space_model", "output", "rjags_Full_Basecase", "processed"))}
