@@ -154,8 +154,47 @@ my4 %>%
     scale_x_continuous(labels = comma,breaks = seq(0, 300000, 50000), limits = c(0,300000))+
     scale_y_continuous(labels = comma,breaks = seq(-600000, 600000, 100000), limits = c(-600000,600000))+
     geom_vline(xintercept = LowerB,linetype = "longdash" )+geom_vline(xintercept = UpperB ,linetype = "longdash")
-  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=500, width=8, height=5, units='in')}
+  ggsave("state_space_model/output/rjags_Full_BaseCase/processed/expected_sustained_yield.png", dpi=500, width=8, height=5, units='in')
 
+my4 %>%
+  filter(sra == "Yield Profile") -> fig_data1
 
+my4 %>%
+  filter(sra == "Overfishing Profile") -> fig_data2
 
+my4 %>%
+  filter(sra == "Recruitment Profile") -> fig_data3
 
+# plot for SEAK escapement report (July 2020)
+ggplot(fig_data1, aes(x = escapement, y = Probability, linetype = max_pct)) + ggtitle("c) Yield Profile") + 
+  annotate("rect", xmin = 38000, xmax = 86000, ymin = 0, ymax = 1,
+           inherit.aes = FALSE, fill = "grey80", alpha = 0.9) +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        strip.text.y = element_text(size=0),legend.position="none") +
+  geom_line() +
+  scale_x_continuous(labels = comma, breaks = seq(0, 200000, 50000), limits = c(0, 200000))+
+  scale_y_continuous(breaks = seq(0, 1, 0.25), limits = c(0, 1))+
+  scale_linetype_discrete(name = "Percent of Max.") + xlab('Escapement (S)')+
+  facet_grid(sra ~ .) -> plot1
+
+ggplot(fig_data2, aes(x = escapement, y = Probability, linetype = max_pct)) + 
+  annotate("rect", xmin = 38000, xmax = 86000, ymin = 0, ymax = 1,
+           inherit.aes = FALSE, fill = "grey80", alpha = 0.9) + ggtitle("a) Overfishing Profile") + 
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        strip.text.y = element_text(size=0),legend.position=c(0.95,0.88), legend.title = element_blank()) +
+  geom_line() + xlab('Escapement (S)') +
+  scale_x_continuous(labels = comma, breaks = seq(0, 200000, 50000), limits = c(0, 200000))+
+  scale_linetype_discrete(name = "Percent of Max.") + 
+  facet_grid(sra ~ .)-> plot2
+
+ggplot(fig_data3, aes(x = escapement, y = Probability, linetype = max_pct)) + 
+  annotate("rect", xmin = 38000, xmax = 86000, ymin = 0, ymax = 1,
+           inherit.aes = FALSE, fill = "grey80", alpha = 0.9) + ggtitle("b) Recruitment Profile") + 
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        strip.text.y = element_text(size=0),legend.position= "none") +
+  geom_line() + xlab('Escapement (S)') +  
+  scale_x_continuous(labels = comma, breaks = seq(0, 200000, 50000), limits = c(0, 200000))+
+  scale_linetype_discrete(name = "Percent of Max.") +
+  facet_grid(sra ~ .)  -> plot3
+cowplot::plot_grid(plot2,plot3,plot1, align = "v", nrow = 3, ncol=1) 
+ggsave("state_space_model/output/rjags_Full_BaseCase/processed/report_plot.png", dpi = 500, height = 7, width = 6, units = "in")}

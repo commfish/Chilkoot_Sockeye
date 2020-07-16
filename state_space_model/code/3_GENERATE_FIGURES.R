@@ -41,7 +41,7 @@ coda %>%
          Rmax = exp(lnalpha)*(1/beta)*exp(-1)) -> coda
 # analysis----
 # create function for probability profiles and figures
-profile(i=10, z=500, xa.start=0, xa.end=10000,lnalpha.c, beta) #can change i,z, xa.start, xa.end
+profile(i=10, z=50, xa.start=0, xa.end=8000,lnalpha.c, beta) #can change i,z, xa.start, xa.end
 QM <- read.csv("state_space_model/output/rjags_Full_BaseCase/processed/QM.csv")
 CI <- read.csv("state_space_model/output/rjags_Full_BaseCase/processed/CI.csv")
 num <- nrow(QM)
