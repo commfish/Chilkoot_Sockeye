@@ -1,4 +1,4 @@
-# Chilkoot Sockeye Salmon Spawner Recruit Analysis
+# Chilkoot Lake Sockeye Salmon Escapement Goal Analysis
 Bayesian spawner-recruit analysis of Chilkoot Lake sockeye salmon. Replaces the "Alaska Salmon" repository
 
 Chilkoot Lake is a glacial system located on the mainland, approximately 13 km northwest of Haines, Alaska. The Chilkoot drainage supports one of the larger runs of sockeye salmon in the region, which is harvested primarily in the District 15 Lynn Canal commercial drift gillnet fishery and in a subsistence fishery in Lutak Inlet. Escapements have been enumerated annually at an adult counting weir in the Chilkoot River, below the outlet of the lake, since 1976. 
